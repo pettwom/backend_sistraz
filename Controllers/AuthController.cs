@@ -7,40 +7,28 @@ namespace backend_trazabilidad.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AuthController :
-        ControllerBase
+    public class AuthController :ControllerBase
     {
         private readonly IAuthService
             _authService;
 
 
-        public AuthController(
-            IAuthService authService)
+        public AuthController(IAuthService authService)
         {
-            _authService =
-                authService;
+            _authService = authService;
         }
 
 
         [AllowAnonymous]
         [HttpPost("login")]
-        public async Task<IActionResult>
-            Login(
-                [FromBody]
-                LoginRequest request)
+        public async Task<IActionResult>Login([FromBody]LoginRequest request)
         {
-            var resultado =
-                await _authService
-                    .LoginAsync(
-                        request
-                    );
+            var resultado =await _authService.LoginAsync(request);
 
 
             if (!resultado.Exito)
             {
-                return Unauthorized(
-                    resultado
-                );
+                return Unauthorized(resultado);
             }
 
 
@@ -59,32 +47,10 @@ namespace backend_trazabilidad.Controllers
             return Ok(
                 new
                 {
-                    idUsuario =
-                        User.FindFirst(
-                            System.Security.Claims
-                                .ClaimTypes
-                                .NameIdentifier
-                        )?.Value,
-
-                    nombre =
-                        User.Identity?.Name,
-
-                    correo =
-                        User.FindFirst(
-                            System.Security.Claims
-                                .ClaimTypes
-                                .Email
-                        )?.Value,
-
-                    perfiles =
-                        User.FindAll(
-                            System.Security.Claims
-                                .ClaimTypes
-                                .Role
-                        )
-                        .Select(
-                            x => x.Value
-                        )
+                    idUsuario =User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,
+                    nombre =User.Identity?.Name,
+                    correo =User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value,
+                    perfiles =User.FindAll(System.Security.Claims.ClaimTypes.Role).Select(x => x.Value)
                 }
             );
         }

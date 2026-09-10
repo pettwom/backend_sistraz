@@ -98,9 +98,7 @@ namespace backend_trazabilidad.Services.Hydro
         }
 
 
-        public async Task<List<string>>
-     ObtenerPerfilesAsync(
-         decimal idUsuario)
+        public async Task<List<string>>ObtenerPerfilesAsync(decimal idUsuario)
         {
             try
             {

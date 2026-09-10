@@ -27,23 +27,17 @@ namespace backend_trazabilidad.Services.Auth
             IJwtService jwtService,
             ILogger<AuthService> logger)
         {
-            _hydroSoapService =
-                hydroSoapService;
+            _hydroSoapService = hydroSoapService;
 
-            _hydroRestService =
-                hydroRestService;
+            _hydroRestService = hydroRestService;
 
-            _jwtService =
-                jwtService;
+            _jwtService = jwtService;
 
-            _logger =
-                logger;
+            _logger = logger;
         }
 
 
-        public async Task<LoginResponse>
-            LoginAsync(
-                LoginRequest request)
+        public async Task<LoginResponse>LoginAsync(LoginRequest request)
         {
             try
             {

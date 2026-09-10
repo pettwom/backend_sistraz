@@ -43,16 +43,6 @@ namespace backend_trazabilidad.Services.Hydro
                     "Error consultando funcionario HYDRO."
                 );
                 throw;
-                //var url = 
-                //    $"{HydroUrl}"+
-                //    $"WSRecursosHumanos/" +
-                //    $"ListaFuncionariosActivos/" +
-                //    $"{Credencial}?format=json"; 
-
-                //return await _httpClient.GetFromJsonAsync<ListaFuncionariosResponse>(url);
-
-                //_logger.LogError(ex, "Excepción al obtener funcionario.");
-                //return null;
             }
         }
 
