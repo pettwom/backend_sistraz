@@ -2,9 +2,10 @@
 {
     public class LoginResponse
     {
-        public bool Ok { get; set; }
-        public string Mensaje { get; set; }
+        public bool Exito { get; set; }
+        public string Mensaje { get; set; } = string.Empty;
         public string? Token { get; set; }
         public Object? Usuario { get; set; }
+        public DateTime? Expira { get; set; }
     }
 }
