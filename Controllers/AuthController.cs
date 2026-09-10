@@ -1,4 +1,4 @@
-﻿using backend_trazabilidad.DTOs
+﻿using backend_trazabilidad.DTOs;
 using backend_trazabilidad.Services.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
