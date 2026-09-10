@@ -399,7 +399,7 @@ namespace backend_trazabilidad.Services.Auth
                     Exito = false,
 
                     Mensaje =
-                        "Ocurrió un error durante la autenticación."
+                        "Ocurrió un error durante la autenticación."+ ex.Message
                 };
             }
         }

@@ -23,25 +23,51 @@ namespace backend_trazabilidad.Services.Hydro
         {
             try
             {
-                var url = $"{HydroUrl}" +
-                    $"WSRecursosHumanos/" +
-                    $"EDatosFuncionriosANH/" +
-                    $"{Credencial}/" +
-                    $"{idUsuario}?format=json";
+                var baseUrl = _configuration["Hydro:Url"];
+                var credencial = _configuration["Hydro:CredencialRrhh"];
 
-                _logger.LogInformation("Consultado Funcio HYDRO {IdUsuario}", idUsuario);
+                if (string.IsNullOrWhiteSpace(baseUrl))
+                    throw new Exception("No existe Hydro:Url en appsettings.json");
 
-                var resultado = await _httpClient.GetFromJsonAsync<FuncionarioResponse>(url);
+                if (string.IsNullOrWhiteSpace(credencial))
+                    throw new Exception("No existe Hydro:CredencialRrhh en appsettings.json");
 
-                return resultado;
+                baseUrl = baseUrl.TrimEnd('/');
+
+                var url =
+                    $"{baseUrl}/WSRecursosHumanos/EDatosFuncionarioANH/" +
+                    $"{Uri.EscapeDataString(credencial)}/{idUsuario}";
+
+                Console.WriteLine("====================================");
+                Console.WriteLine($"BASE URL   : {baseUrl}");
+                Console.WriteLine($"ID USUARIO : {idUsuario}");
+                Console.WriteLine($"URL FINAL  : {url}");
+                Console.WriteLine("====================================");
+
+                var response = await _httpClient.GetAsync(url);
+
+                Console.WriteLine(
+                    $"STATUS HYDRO: {(int)response.StatusCode} - {response.StatusCode}"
+                );
+
+                var contenido =
+                    await response.Content.ReadAsStringAsync();
+
+                Console.WriteLine($"RESPUESTA HYDRO: {contenido}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return null;
+                }
+
+                return await response.Content
+                    .ReadFromJsonAsync<FuncionarioResponse>();
             }
-
             catch (Exception ex)
             {
-                _logger.LogError(
-                    ex,
-                    "Error consultando funcionario HYDRO."
-                );
+                Console.WriteLine("ERROR HYDRO:");
+                Console.WriteLine(ex.ToString());
+
                 throw;
             }
         }

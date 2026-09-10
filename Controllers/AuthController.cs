@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace backend_trazabilidad.Controllers
 {
+    
     [ApiController]
     [Route("api/[controller]")]
     public class AuthController :ControllerBase
@@ -23,6 +24,7 @@ namespace backend_trazabilidad.Controllers
         [HttpPost("login")]
         public async Task<IActionResult>Login([FromBody]LoginRequest request)
         {
+            Console.Write("holas petter");
             var resultado =await _authService.LoginAsync(request);
 
 
