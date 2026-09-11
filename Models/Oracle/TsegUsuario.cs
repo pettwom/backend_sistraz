@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace OracleScanffold.Models.Oracle
 {
@@ -9,12 +10,12 @@ namespace OracleScanffold.Models.Oracle
         {
             TsegPerfilesUsuarios = new HashSet<TsegPerfilesUsuario>();
         }
-
+        [Key]
         public int IdUsuario { get; set; }
         public string Login { get; set; } = null!;
         public string Clave { get; set; } = null!;
-        public bool? Estado { get; set; }
-        public bool? AudEstado { get; set; }
+        public short? Estado { get; set; }
+        public short? AudEstado { get; set; }
         public string AudUsuario { get; set; } = null!;
         public DateTime AudFecha { get; set; }
         public string? ClaveSalt { get; set; }
@@ -23,5 +24,7 @@ namespace OracleScanffold.Models.Oracle
         public DateTime? VigenciaHasta { get; set; }
 
         public virtual ICollection<TsegPerfilesUsuario> TsegPerfilesUsuarios { get; set; }
+
+
     }
 }

@@ -14,7 +14,7 @@ namespace OracleScanffold.Models.Oracle
 
         public short IdPerfil { get; set; }
         public string Descripcion { get; set; } = null!;
-        public bool? AudEstado { get; set; }
+        public short? AudEstado { get; set; }
         public string AudUsuario { get; set; } = null!;
         public DateTime AudFecha { get; set; }
         public decimal? Prioridad { get; set; }

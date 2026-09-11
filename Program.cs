@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using backend_trazabilidad;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Oracle.EntityFrameworkCore;
 using Npgsql;
 

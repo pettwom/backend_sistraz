@@ -13,6 +13,7 @@ namespace backend_trazabilidad.Services.Menu
 
         public async Task<List<MenuDto>> ObtenerMenusAsync(decimal idUsuario, decimal idModulo)
         {
+            
             var menu = await (
                 from tu in _context.Usuario
 
@@ -29,8 +30,7 @@ namespace backend_trazabilidad.Services.Menu
                     on tmp.IdMenu equals tm.IdMenu
 
                 where tu.IdUsuario == idUsuario
-                    && tp.NombrePerfil == "FUNCIONARIO ANH"
-                    && tm.IdModulo == 1222
+                    && tm.IdModulo == 122
 
                 orderby tm.Orden ascending
 
@@ -40,7 +40,7 @@ namespace backend_trazabilidad.Services.Menu
                     Titulo = tm.Titulo,
                     Enlace = tm.Enlace,
                     IdMenuPadre = tm.IdMenuPadre,
-                    Icono = tm.Icono != null ? Convert.ToBase64String(tm.Icono) : null, // si MenuDto.Icono es string,
+                    Icono = null,
                     Orden = tm.Orden,
                     Descripcion = tm.Descripcion
                 }
