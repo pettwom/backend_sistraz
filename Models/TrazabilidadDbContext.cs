@@ -302,11 +302,11 @@ public partial class TrazabilidadDbContext : DbContext
                 .HasComment("volumen total expresado en Toneladas")
                 .HasColumnName("vol_total");
 
-            entity.HasOne(d => d.IdNavigation).WithOne(p => p.Plantum)
-                .HasPrincipalKey<Produccion>(p => p.IdPlanta)
-                .HasForeignKey<Plantum>(d => d.Id)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("fk_planta_produccion");
+            //entity.HasOne(d => d.IdNavigation).WithOne(p => p.Plantum)
+            //    .HasPrincipalKey<Produccion>(p => p.IdPlanta)
+            //    .HasForeignKey<Plantum>(d => d.Id)
+            //    .OnDelete(DeleteBehavior.ClientSetNull)
+            //    .HasConstraintName("fk_planta_produccion");
         });
 
         modelBuilder.Entity<Produccion>(entity =>
@@ -355,12 +355,7 @@ public partial class TrazabilidadDbContext : DbContext
             entity.Property(e => e.Usumod)
                 .HasComment("usuario de modificacion")
                 .HasColumnName("usumod");
-            entity.HasOne(d => d.Plantum).WithOne(p => p.IdNavigation)
-                .HasForeignKey<Produccion>(d => d.IdPlanta)
-                .HasConstraintName("produccion_id_planta_fkey");
-            entity.HasOne(d => d.CorrelativoNavigation).WithMany(p => p.Produccions)
-                .HasForeignKey(d => d.Correlativo)
-                .HasConstraintName("fk_produccion_tbl_trazabilidad_0");
+
         });
 
         modelBuilder.Entity<Tanque>(entity =>
