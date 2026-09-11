@@ -355,7 +355,9 @@ public partial class TrazabilidadDbContext : DbContext
             entity.Property(e => e.Usumod)
                 .HasComment("usuario de modificacion")
                 .HasColumnName("usumod");
-
+            entity.HasOne(d => d.CorrelativoNavigation).WithMany(p => p.Produccions)
+                .HasForeignKey(d => d.Correlativo)
+                .HasConstraintName("fk_produccion_tbl_trazabilidad_");
         });
 
         modelBuilder.Entity<Tanque>(entity =>
