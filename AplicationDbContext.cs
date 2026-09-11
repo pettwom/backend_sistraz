@@ -22,9 +22,12 @@ namespace backend_trazabilidad
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            entity.HasOne(d => d.Plantum).WithOne(p => p.IdNavigation)
-            .HasForeignKey<Produccion>(d => d.IdPlanta)
-            .HasConstraintName("produccion_id_planta_fkey");
+            modelBuilder.Entity<Produccion>(entity =>
+            {
+                entity.HasOne(d => d.Plantum).WithOne(p => p.IdNavigation)
+                    .HasForeignKey<Produccion>(d => d.IdPlanta)
+                    .HasConstraintName("produccion_id_planta_fkey");
+            });
         }
     }
 }
