@@ -98,5 +98,7 @@ public partial class Despacho
     /// </summary>
     public DateTime? Fecmod { get; set; }
 
-    public virtual TblTrazabilidad? TblTrazabilidad { get; set; }
+    //public virtual TblTrazabilidad? TblTrazabilidad { get; set; }
+    public virtual ICollection<TblTrazabilidad> TblTrazabilidades { get; set; }
+    = new List<TblTrazabilidad>();
 }

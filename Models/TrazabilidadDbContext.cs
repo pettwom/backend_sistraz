@@ -38,6 +38,11 @@ public partial class TrazabilidadDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<TblTrazabilidad>()
+            .HasOne(t => t.CorrDest1)
+            .WithMany(d => d.TblTrazabilidades)
+            .HasForeignKey(t => t.CorrDest)
+            .HasPrincipalKey(d => d.Id);
         //modelBuilder.Entity<Almacenado>(entity =>
         //{
         //    entity.HasKey(e => e.Id).HasName("almcenado_pk");

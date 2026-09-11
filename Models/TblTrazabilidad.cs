@@ -54,11 +54,11 @@ public partial class TblTrazabilidad
     /// </summary>
     public DateTime? Fecmod { get; set; }
 
-    public virtual Despacho CorrDest1 { get; set; } = null!;
+    //public virtual Despacho CorrDest1 { get; set; } = null!;
 
-    public virtual Transporte CorrDest2 { get; set; } = null!;
+    //public virtual Transporte CorrDest2 { get; set; } = null!;
 
-    public virtual Almacenado CorrDestNavigation { get; set; } = null!;
+    //public virtual Almacenado CorrDestNavigation { get; set; } = null!;
 
     public virtual ICollection<Envasado> Envasados { get; set; } = new List<Envasado>();
 
