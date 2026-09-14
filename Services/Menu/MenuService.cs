@@ -30,7 +30,8 @@ namespace backend_trazabilidad.Services.Menu
                     on tmp.IdMenu equals tm.IdMenu
 
                 where tu.IdUsuario == idUsuario
-                    && tm.IdModulo == 122
+                    && tm.IdModulo == 122 
+                    && tm.AudEstado != 3
 
                 orderby tm.Orden ascending
 

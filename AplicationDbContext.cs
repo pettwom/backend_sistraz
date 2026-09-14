@@ -205,6 +205,10 @@ namespace backend_trazabilidad
 
                 entity.Property(e => e.IdModulo)
                     .HasColumnName("ID_MODULO");
+
+                entity.Property(e => e.AudEstado)
+                    .HasColumnName("AUD_ESTADO")
+                    .HasColumnType("number(1)");
             });
         }
     }
