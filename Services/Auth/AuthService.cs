@@ -193,8 +193,7 @@ namespace backend_trazabilidad.Services.Auth
 
 
                     var funcionario =
-                        funcionarioResponse
-                            ?.oResultado;
+                        funcionarioResponse?.oResultado;
 
 
                     if (funcionario == null)
@@ -234,7 +233,7 @@ namespace backend_trazabilidad.Services.Auth
 
 
                     var encontrado =
-                        listado?.oResultado
+                        listado?.oResultado?
                             .FirstOrDefault(
                                 x =>
                                     x.UsuarioHydroId

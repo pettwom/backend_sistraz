@@ -5,7 +5,7 @@ namespace backend_trazabilidad.Models.Hydro
     public class FuncionarioDto
     {
         [JsonPropertyName("estado")]
-        public string Estado { get; set; }
+        public string? Estado { get; set; }
         [JsonPropertyName("fotO_DIGITAL_ID")]
         public decimal? FotoDigitalId { get; set; }
         [JsonPropertyName("iD_ORGANIGRAMA")]
