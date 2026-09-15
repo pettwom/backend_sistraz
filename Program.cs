@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Oracle.EntityFrameworkCore;
 using Npgsql;
-using backend_trazabilidad.Services.Postgresql.Produccion;
+using backend_trazabilidad.Services.Postgresql;
 
 var builder = WebApplication.CreateBuilder(args);
 // ========================================
@@ -64,7 +64,8 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IHydroSoapService, HydroSoapService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IMenuService, MenuService>();
-builder.Services.AddScoped<IProduccionService, ProduccionService>();
+builder.Services.AddScoped<IProduccionService,ProduccionService>();
+
 
 builder.Services
     .AddHttpClient<IHydroRestService, HydroRestService>()
