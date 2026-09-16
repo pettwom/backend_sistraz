@@ -2,6 +2,7 @@
 using backend_trazabilidad.Models.Postgresql;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using System.Security.Claims;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -11,7 +12,7 @@ namespace backend_trazabilidad.Services.Postgresql
     {
         private readonly PostgresDbContext _context;
         private readonly ILogger<ProduccionService> _logger;
-        private IHttpContextAccessor _httpContextAccessor;
+        private readonly IHttpContextAccessor _httpContextAccessor;
         public ProduccionService(PostgresDbContext context, ILogger<ProduccionService> logger, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
@@ -61,9 +62,13 @@ namespace backend_trazabilidad.Services.Postgresql
 
         public async Task<CrearPlantaDto> CrearPlantaAsync(CrearPlantaDto plt)
         {
+
             try
             {
-                
+                var idUsuario = ObtenerIdUsuario();
+
+                Console.WriteLine($"ID USUARIO => {idUsuario}");
+
                 await using var transaccion = await _context.Database.BeginTransactionAsync();
                 // ================================================================================
                 // 1. BUSCAR PLANTA
@@ -75,10 +80,11 @@ namespace backend_trazabilidad.Services.Postgresql
                 var instancia = new TbInstancium
                 {
                     Codigo = plt.CodPlanta,
-                    Nombre= plt.DescPlanta,
+                    Nombre = plt.DescPlanta,
                     IdTipoLugar = 1,
                     Ubicacion = "BOLIVIA",
                     Estado = true,
+                    Usucre = idUsuario
                 };
                 _context.TbInstancia.Add(instancia);
                 await _context.SaveChangesAsync();
@@ -93,7 +99,8 @@ namespace backend_trazabilidad.Services.Postgresql
                     Departamento = plt.Departamento,
                     PuntoIngreso = plt.PuntoIngreso,
                     Estado = true,
-                    Observacion = plt.ObsPlanta
+                    Observacion = plt.ObsPlanta,
+
                 };
                 _context.TbPlanta.Add(plant);
                 await _context.SaveChangesAsync();
@@ -104,11 +111,14 @@ namespace backend_trazabilidad.Services.Postgresql
                 // ================================================================================
                 return plt;
             }
-            catch (Exception ex)
+            catch (DbUpdateException ex)
+                when (ex.InnerException is PostgresException pgEx &&
+                      pgEx.SqlState == PostgresErrorCodes.UniqueViolation &&
+                      pgEx.ConstraintName == "uq_instancia_tipo_codigo")
             {
-                _logger.LogError(ex, "ERROR AL CREAR PLANTA: {Mensaje}", ex.Message);
-
-                throw;
+                throw new InvalidOperationException(
+                    $"La planta con código '{plt.CodPlanta}' ya se encuentra registrada."
+                );
             }
 
         }
@@ -165,90 +175,28 @@ namespace backend_trazabilidad.Services.Postgresql
                 .ToString("N")[..6]
                 .ToUpper()}";
         }
-        //private long ObtenerIdUsuario()
-        //{
-        //    var user = _httpContextAccessor.HttpContext?.User;
+        private long ObtenerIdUsuario()
+        {
+            var idUsuarioClaim = _httpContextAccessor
+                .HttpContext?
+                .User
+                .FindFirstValue(ClaimTypes.NameIdentifier);
 
-        //    Console.WriteLine("========== USUARIO JWT ==========");
-        //    Console.WriteLine($"User null: {user == null}");
-        //    Console.WriteLine($"Autenticado: {user?.Identity?.IsAuthenticated}");
-        //    Console.WriteLine($"AuthenticationType: {user?.Identity?.AuthenticationType}");
-        //    Console.WriteLine($"Claims: {user?.Claims.Count()}");
+            if (string.IsNullOrWhiteSpace(idUsuarioClaim))
+            {
+                throw new UnauthorizedAccessException(
+                    "No se pudo obtener el ID del usuario autenticado."
+                );
+            }
 
-        //    if (user != null)
-        //    {
-        //        foreach (var claim in user.Claims)
-        //        {
-        //            Console.WriteLine(
-        //                $"CLAIM => [{claim.Type}] = [{claim.Value}]"
-        //            );
-        //        }
-        //    }
+            if (!long.TryParse(idUsuarioClaim, out var idUsuario))
+            {
+                throw new UnauthorizedAccessException(
+                    "El ID del usuario no es válido."
+                );
+            }
 
-        //    Console.WriteLine("=================================");
-
-        //    var valor = user?
-        //        .FindFirst(ClaimTypes.NameIdentifier)?
-        //        .Value;
-
-        //    Console.WriteLine($"ID ENCONTRADO = {valor ?? "NULL"}");
-
-        //    if (!long.TryParse(valor, out var idUsuario))
-        //    {
-        //        throw new UnauthorizedAccessException(
-        //            $"No se pudo obtener ID. " +
-        //            $"Autenticado={user?.Identity?.IsAuthenticated}; " +
-        //            $"Claims={user?.Claims.Count()}; " +
-        //            $"Valor={valor ?? "NULL"}"
-        //        );
-        //    }
-
-        //    return idUsuario;
-        //}
-
-
-        //private string ObtenerUsername()
-        //{
-        //    var user = _httpContextAccessor.HttpContext?.User;
-
-        //    var username = user?
-        //        .FindFirst(ClaimTypes.Email)?
-        //        .Value;
-
-        //    if (string.IsNullOrWhiteSpace(username))
-        //    {
-        //        throw new UnauthorizedAccessException(
-        //            "No se pudo obtener el usuario autenticado."
-        //        );
-        //    }
-
-        //    return username;
-        //}
-        //private string ObtenerUsername()
-        //{
-        //    var usuario = _httpContextAccessor
-        //        .HttpContext?
-        //        .User;
-
-        //    if (usuario == null)
-        //    {
-        //        throw new UnauthorizedAccessException(
-        //            "No existe un usuario autenticado."
-        //        );
-        //    }
-
-        //    var username = usuario
-        //        .FindFirst(ClaimTypes.Name)?
-        //        .Value;
-
-        //    if (string.IsNullOrEmpty(username))
-        //    {
-        //        throw new UnauthorizedAccessException(
-        //            "No se pudo obtener el nombre de usuario."
-        //        );
-        //    }
-
-        //    return username;
-        //}
+            return idUsuario;
+        }
     }
 }
