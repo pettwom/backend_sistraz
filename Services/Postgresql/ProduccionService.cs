@@ -39,14 +39,15 @@ namespace backend_trazabilidad.Services.Postgresql
 
                 select new ProduccionDto
                 {
-                    Lote = tlg.Codigo ,
+                    Lote = tlg.Codigo,
                     Nombre = ti.Codigo,
                     NumCertificado = tc.NumeroCertificado,
                     FechaMuestreo = tlg.FechaOrigen,
                     VolTotal = tlg.VolumenInicial,
                     Pais = tp.Pais,
                     PuntoIngreso = tp.PuntoIngreso,
-                    Estado = tlg.Estado
+                    Estado = tlg.Estado,
+                    TipoOperacion = tp.TipoOperacion
                 }
                 ).AsNoTracking().ToListAsync();
             return lista;
