@@ -25,6 +25,7 @@ namespace backend_trazabilidad.Controllers
         {
             var resultado = await _produccionService.CrearPlantaAsync(dto);
             return Ok(resultado);
+
         }
     }
 }

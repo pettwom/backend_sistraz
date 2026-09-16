@@ -63,6 +63,7 @@ namespace backend_trazabilidad.Services.Postgresql
         {
             try
             {
+                
                 await using var transaccion = await _context.Database.BeginTransactionAsync();
                 // ================================================================================
                 // 1. BUSCAR PLANTA
@@ -74,11 +75,10 @@ namespace backend_trazabilidad.Services.Postgresql
                 var instancia = new TbInstancium
                 {
                     Codigo = plt.CodPlanta,
-                    Descripcion = plt.DescPlanta,
+                    Nombre= plt.DescPlanta,
                     IdTipoLugar = 1,
                     Ubicacion = "BOLIVIA",
                     Estado = true,
-                    Usucre = ObtenerIdUsuario()
                 };
                 _context.TbInstancia.Add(instancia);
                 await _context.SaveChangesAsync();
@@ -89,7 +89,7 @@ namespace backend_trazabilidad.Services.Postgresql
                 {
                     IdInstancia = instancia.IdInstancia,
                     TipoOperacion = 1,
-                    Pais = plt.Pais,
+                    Pais = "BOLIVIA",
                     Departamento = plt.Departamento,
                     PuntoIngreso = plt.PuntoIngreso,
                     Estado = true,
@@ -165,63 +165,90 @@ namespace backend_trazabilidad.Services.Postgresql
                 .ToString("N")[..6]
                 .ToUpper()}";
         }
-        private long ObtenerIdUsuario()
-        {
-            var usuario = _httpContextAccessor.HttpContext?.User;
+        //private long ObtenerIdUsuario()
+        //{
+        //    var user = _httpContextAccessor.HttpContext?.User;
 
-            if (usuario == null)
-                throw new UnauthorizedAccessException(
-                    "No existe un usuario autenticado."
-                );
+        //    Console.WriteLine("========== USUARIO JWT ==========");
+        //    Console.WriteLine($"User null: {user == null}");
+        //    Console.WriteLine($"Autenticado: {user?.Identity?.IsAuthenticated}");
+        //    Console.WriteLine($"AuthenticationType: {user?.Identity?.AuthenticationType}");
+        //    Console.WriteLine($"Claims: {user?.Claims.Count()}");
 
-            foreach (var claim in usuario.Claims)
-            {
-                Console.WriteLine(
-                    $"CLAIM => {claim.Type} = {claim.Value}"
-                );
-            }
+        //    if (user != null)
+        //    {
+        //        foreach (var claim in user.Claims)
+        //        {
+        //            Console.WriteLine(
+        //                $"CLAIM => [{claim.Type}] = [{claim.Value}]"
+        //            );
+        //        }
+        //    }
 
-            var idUsuarioClaim =
-                usuario.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        //    Console.WriteLine("=================================");
 
-            Console.WriteLine(
-                $"ID USUARIO CLAIM => {idUsuarioClaim}"
-            );
+        //    var valor = user?
+        //        .FindFirst(ClaimTypes.NameIdentifier)?
+        //        .Value;
 
-            if (!long.TryParse(idUsuarioClaim, out var idUsuario))
-            {
-                throw new UnauthorizedAccessException(
-                    "No se pudo obtener el ID del usuario."
-                );
-            }
+        //    Console.WriteLine($"ID ENCONTRADO = {valor ?? "NULL"}");
 
-            return idUsuario;
-        }
-        private string ObtenerUsername()
-        {
-            var usuario = _httpContextAccessor
-                .HttpContext?
-                .User;
+        //    if (!long.TryParse(valor, out var idUsuario))
+        //    {
+        //        throw new UnauthorizedAccessException(
+        //            $"No se pudo obtener ID. " +
+        //            $"Autenticado={user?.Identity?.IsAuthenticated}; " +
+        //            $"Claims={user?.Claims.Count()}; " +
+        //            $"Valor={valor ?? "NULL"}"
+        //        );
+        //    }
 
-            if (usuario == null)
-            {
-                throw new UnauthorizedAccessException(
-                    "No existe un usuario autenticado."
-                );
-            }
+        //    return idUsuario;
+        //}
 
-            var username = usuario
-                .FindFirst(ClaimTypes.Name)?
-                .Value;
 
-            if (string.IsNullOrEmpty(username))
-            {
-                throw new UnauthorizedAccessException(
-                    "No se pudo obtener el nombre de usuario."
-                );
-            }
+        //private string ObtenerUsername()
+        //{
+        //    var user = _httpContextAccessor.HttpContext?.User;
 
-            return username;
-        }
+        //    var username = user?
+        //        .FindFirst(ClaimTypes.Email)?
+        //        .Value;
+
+        //    if (string.IsNullOrWhiteSpace(username))
+        //    {
+        //        throw new UnauthorizedAccessException(
+        //            "No se pudo obtener el usuario autenticado."
+        //        );
+        //    }
+
+        //    return username;
+        //}
+        //private string ObtenerUsername()
+        //{
+        //    var usuario = _httpContextAccessor
+        //        .HttpContext?
+        //        .User;
+
+        //    if (usuario == null)
+        //    {
+        //        throw new UnauthorizedAccessException(
+        //            "No existe un usuario autenticado."
+        //        );
+        //    }
+
+        //    var username = usuario
+        //        .FindFirst(ClaimTypes.Name)?
+        //        .Value;
+
+        //    if (string.IsNullOrEmpty(username))
+        //    {
+        //        throw new UnauthorizedAccessException(
+        //            "No se pudo obtener el nombre de usuario."
+        //        );
+        //    }
+
+        //    return username;
+        //}
     }
 }
