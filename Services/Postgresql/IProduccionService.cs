@@ -6,5 +6,6 @@ namespace backend_trazabilidad.Services.Postgresql
     {
         Task<List<ProduccionDto>> ObtenerListadoAsync();
         //Task<CrearProduccionRequestDto> CrearProdAsync(CrearProduccionRequestDto dto);
+        Task<CrearPlantaDto> CrearPlantaAsync(CrearPlantaDto plt);
     }
 }

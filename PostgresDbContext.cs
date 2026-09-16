@@ -30,7 +30,7 @@ public partial class PostgresDbContext : DbContext
 
     public virtual DbSet<TbInstancium> TbInstancia { get; set; }
 
-    public virtual DbSet<TbLoteGlp> TbLoteGlps { get; set; }
+    public virtual DbSet<TbLoteGlp>TbLoteGlps { get; set; }
 
     public virtual DbSet<TbPlantum> TbPlanta { get; set; }
 

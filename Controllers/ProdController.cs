@@ -1,4 +1,5 @@
-﻿using backend_trazabilidad.Services.Postgresql;
+﻿using backend_trazabilidad.DTOs.Postgresql;
+using backend_trazabilidad.Services.Postgresql;
 using Microsoft.AspNetCore.Mvc;
 
 namespace backend_trazabilidad.Controllers
@@ -18,6 +19,12 @@ namespace backend_trazabilidad.Controllers
         {
             var prod = await _produccionService.ObtenerListadoAsync();
             return Ok(prod);
+        }
+        [HttpPost("addPlanta")]
+        public async Task<IActionResult> AddPlanta([FromBody] CrearPlantaDto dto)
+        {
+            var resultado = await _produccionService.CrearPlantaAsync(dto);
+            return Ok(resultado);
         }
     }
 }

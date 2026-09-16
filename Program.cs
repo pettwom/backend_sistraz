@@ -76,7 +76,7 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IMenuService, MenuService>();
 builder.Services.AddScoped<IProduccionService,ProduccionService>();
 builder.Services.AddScoped<ICatalogoService,CatalogoService>();
-
+builder.Services.AddHttpContextAccessor();
 
 builder.Services
     .AddHttpClient<IHydroRestService, HydroRestService>()
@@ -89,6 +89,7 @@ builder.Services
                     .DangerousAcceptAnyServerCertificateValidator
         };
     });
+
 
 
 // ========================================
