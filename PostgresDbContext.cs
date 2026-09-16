@@ -40,6 +40,8 @@ public partial class PostgresDbContext : DbContext
 
     public virtual DbSet<TrazabilidadView> TrazabilidadViews { get; set; }
 
+    public virtual DbSet<TblParametrica> TblParametricas { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<TbCertificado>(entity =>
@@ -471,34 +473,50 @@ public partial class PostgresDbContext : DbContext
             entity.HasIndex(e => e.Codigo, "tb_lote_glp_codigo_key").IsUnique();
 
             entity.Property(e => e.IdLote).HasColumnName("id_lote");
+            entity.Property(e => e.Activo).HasColumnName("activo");
+            entity.Property(e => e.ActualizadoEn)
+                .HasColumnType("timestamp(0) without time zone")
+                .HasColumnName("actualizado_en");
+            entity.Property(e => e.ActualizadoPor)
+                .HasMaxLength(200)
+                .HasColumnName("actualizado_por");
             entity.Property(e => e.Codigo)
                 .HasMaxLength(60)
                 .HasColumnName("codigo");
+            entity.Property(e => e.CreadoEn)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp(0) without time zone")
+                .HasColumnName("creado_en");
+            entity.Property(e => e.CreadoPor)
+                .HasMaxLength(200)
+                .HasColumnName("creado_por");
+            entity.Property(e => e.EliminadoEn)
+                .HasColumnType("timestamp(0) without time zone")
+                .HasColumnName("eliminado_en");
+            entity.Property(e => e.EliminadoPor)
+                .HasMaxLength(200)
+                .HasColumnName("eliminado_por");
             entity.Property(e => e.Estado)
                 .HasMaxLength(20)
                 .HasDefaultValueSql("'ACTIVO'::character varying")
                 .HasColumnName("estado");
-            entity.Property(e => e.Feccre)
-                .HasDefaultValueSql("now()")
-                .HasColumnType("timestamp(0) without time zone")
-                .HasColumnName("feccre");
             entity.Property(e => e.FechaOrigen)
                 .HasColumnType("timestamp(0) without time zone")
                 .HasColumnName("fecha_origen");
+            entity.Property(e => e.IdActualizadoPor).HasColumnName("id_actualizado_por");
+            entity.Property(e => e.IdCreadoPor).HasColumnName("id_creado_por");
+            entity.Property(e => e.IdEliminadoPor).HasColumnName("id_eliminado_por");
             entity.Property(e => e.IdPlantaOrigen).HasColumnName("id_planta_origen");
+            entity.Property(e => e.Matadata)
+                .HasColumnType("jsonb")
+                .HasColumnName("matadata");
             entity.Property(e => e.Unidad)
                 .HasMaxLength(10)
                 .HasDefaultValueSql("'TN'::character varying")
                 .HasColumnName("unidad");
-            entity.Property(e => e.Usucre).HasColumnName("usucre");
             entity.Property(e => e.VolumenInicial)
                 .HasPrecision(14, 3)
                 .HasColumnName("volumen_inicial");
-
-            entity.HasOne(d => d.IdPlantaOrigenNavigation).WithMany(p => p.TbLoteGlps)
-                .HasForeignKey(d => d.IdPlantaOrigen)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("fk_lote_planta");
         });
 
         modelBuilder.Entity<TbPlantum>(entity =>
@@ -646,6 +664,28 @@ public partial class PostgresDbContext : DbContext
             entity.Property(e => e.TipoEvento)
                 .HasMaxLength(30)
                 .HasColumnName("tipo_evento");
+        });
+
+        modelBuilder.Entity<TblParametrica>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("tbl_parametrica_pk");
+
+            entity.ToTable("tbl_parametrica", "traz_parametrica");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Categoria)
+                .HasMaxLength(255)
+                .HasColumnName("categoria");
+            entity.Property(e => e.Descripcion).HasColumnName("descripcion");
+            entity.Property(e => e.Estado)
+                .HasDefaultValue(true)
+                .HasColumnName("estado");
+            entity.Property(e => e.Nombre)
+                .HasMaxLength(255)
+                .HasColumnName("nombre");
+            entity.Property(e => e.Valor)
+                .HasMaxLength(255)
+                .HasColumnName("valor");
         });
 
         OnModelCreatingPartial(modelBuilder);

@@ -1,5 +1,6 @@
 ﻿using backend_trazabilidad.DTOs.Postgresql;
 using backend_trazabilidad.Models.Postgresql;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -8,9 +9,11 @@ namespace backend_trazabilidad.Services.Postgresql
     public class ProduccionService:IProduccionService
     {
         private readonly PostgresDbContext _context;
-        public ProduccionService(PostgresDbContext context)
+        private readonly ILogger<ProduccionService> _logger;
+        public ProduccionService(PostgresDbContext context, ILogger<ProduccionService> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         public async Task<List<ProduccionDto>> ObtenerListadoAsync()
@@ -52,5 +55,43 @@ namespace backend_trazabilidad.Services.Postgresql
                 ).AsNoTracking().ToListAsync();
             return lista;
         }
+
+        //public async Task<CrearProduccionRequestDto> CrearProdAsync(CrearProduccionRequestDto dto) 
+        //{
+        //    await using var transaccion = await _context.Database.BeginTransactionAsync();
+        //    try 
+        //    {
+        //        // ================================================================================
+        //        // 1. BUSCAR PLANTA
+        //        // ================================================================================
+        //        var planta = await _context.TbPlanta.FirstOrDefaultAsync(x => x.IdPlanta == dto.PlantaId);// obtengo los datos de la planta
+
+        //        _logger.LogInformation("1. planta = ", planta);
+
+        //        if (planta == null) throw new Exception("La Planta no existe");
+        //        if (planta.IdInstancia == null) throw new Exception("La Planta no tiene una instancia asociada");
+
+        //        // ================================================================================
+        //        // 2. CREAR LOTE
+        //        // ================================================================================
+        //        var lote = new TbLoteGlp 
+        //        { 
+        //        Codigo = GenerarCodigoTrazabilidad(),
+        //        IdPlantaOrigen = planta.IdPlanta,
+        //        FechaOrigen = dto.FechaMuestra,
+        //        VolumenInicial = dto.VolTotal,
+        //        Unidad = "Tn",
+        //        Estado = true,
+        //        Activo = true,
+        //        CreadoEn = DateTime,
+        //        IdCreadoPor = 
+        //        }
+
+        //    }
+        //    catch (Exception ex) 
+        //    { 
+            
+        //    }
+        //}
     }
 }
