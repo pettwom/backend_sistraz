@@ -3,6 +3,7 @@ using backend_trazabilidad.Models.Postgresql;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using System.Numerics;
 using System.Security.Claims;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
@@ -65,9 +66,9 @@ namespace backend_trazabilidad.Services.Postgresql
 
             try
             {
-                var idUsuario = ObtenerIdUsuario();
+                var usuario = ObtenerIdUsuario();
 
-                Console.WriteLine($"ID USUARIO => {idUsuario}");
+                Console.WriteLine($"ID USUARIO => {usuario.IdUsuario}");
 
                 await using var transaccion = await _context.Database.BeginTransactionAsync();
                 // ================================================================================
@@ -75,7 +76,7 @@ namespace backend_trazabilidad.Services.Postgresql
                 // ================================================================================
                 var planta = await _context.TbInstancia.FirstOrDefaultAsync(x => x.Codigo == plt.CodPlanta);
                 // ================================================================================
-                // 1. CREAR NUEVA INSTANCIA
+                // 2. CREAR NUEVA INSTANCIA
                 // ================================================================================
                 var instancia = new TbInstancium
                 {
@@ -84,12 +85,12 @@ namespace backend_trazabilidad.Services.Postgresql
                     IdTipoLugar = 1,
                     Ubicacion = "BOLIVIA",
                     Estado = true,
-                    Usucre = idUsuario
+                    Usucre = usuario.IdUsuario
                 };
                 _context.TbInstancia.Add(instancia);
                 await _context.SaveChangesAsync();
                 // ================================================================================
-                // 2. CREAR NUEVA PLANTA
+                // 3. CREAR NUEVA PLANTA
                 // ================================================================================
                 var plant = new TbPlantum
                 {
@@ -107,7 +108,7 @@ namespace backend_trazabilidad.Services.Postgresql
 
                 await transaccion.CommitAsync();
                 // ================================================================================
-                // 3. RETORNA RESULTADO
+                // 4. RETORNA RESULTADO
                 // ================================================================================
                 return plt;
             }
@@ -122,81 +123,118 @@ namespace backend_trazabilidad.Services.Postgresql
             }
 
         }
-        //public async Task<CrearProduccionRequestDto> CrearProdAsync(CrearProduccionRequestDto dto)
-        //{
-        //    await using var transaccion = await _context.Database.BeginTransactionAsync();
-        //    try
-        //    {
-        //        // ================================================================================
-        //        // 1. BUSCAR PLANTA
-        //        // ================================================================================
-        //        var planta = await _context.TbPlanta.FirstOrDefaultAsync(x => x.IdPlanta == dto.PlantaId);// obtengo los datos de la planta
+        public async Task<CrearProduccionRequestDto> CrearProdAsync(CrearProduccionRequestDto dto)
+        {
 
-        //        _logger.LogInformation("1. planta = ", planta);
+            try
+            {
+                var usuarioAutenticado = ObtenerIdUsuario();
+                await using var transaccion = await _context.Database.BeginTransactionAsync();
 
-        //        if (planta == null) throw new Exception("La Planta no existe");
-        //        if (planta.IdInstancia == null) throw new Exception("La Planta no tiene una instancia asociada");
+                // ================================================================================
+                // 1. BUSCAR PLANTA
+                // ================================================================================
+                var loteQwery = await _context.TbLoteGlps.FirstOrDefaultAsync(x => x.IdPlantaOrigen == dto.PlantaId);
+                var plantaQwery = await _context.TbPlanta.FirstOrDefaultAsync(x => x.IdPlanta == dto.PlantaId);
 
-        //        // ================================================================================
-        //        // 2. CREAR LOTE
-        //        // ================================================================================
-        //        var lote = new TbLoteGlp
-        //        {
-        //            Codigo = GenerarCodigoTrazabilidad(),
-        //            IdPlantaOrigen = planta.IdPlanta,
-        //            FechaOrigen = dto.FechaMuestra,
-        //            VolumenInicial = dto.VolTotal,
-        //            Unidad = "Tn",
-        //            Estado = "Activo",
-        //            Activo = true,
-        //            CreadoEn = DateTime.Now,
-        //            IdCreadoPor = ObtenerIdUsuario(),
-        //            CreadoPor = ObtenerUsername()
-        //        };
-        //        _context.TbLoteGlps.Add(lote);
-        //        await _context.SaveChangesAsync();
+                if (loteQwery == null)
+                {
+                    // ================================================================================
+                    // 2. ALMACENAR EN LOTE
+                    // ================================================================================                
+                    var loteSave = new TbLoteGlp
+                    {
+                        Codigo = GenerarCodigoTrazabilidad(),
+                        IdPlantaOrigen = dto.PlantaId,
+                        FechaOrigen = dto.FechaMuestra,
+                        VolumenInicial = dto.VolTotal,
+                        Unidad = "Tn",
+                        Estado = "ACTIVO",
+                        Activo = true,
+                        CreadoEn = DateTime.Now,
+                        IdCreadoPor = usuarioAutenticado.IdUsuario,
+                        CreadoPor = usuarioAutenticado.Email
+                    };
+                    _context.TbLoteGlps.Add(loteSave);
+                    await _context.SaveChangesAsync();
+                    // ================================================================================
+                    // 3. ALMACENAR EN EVENTO
+                    // ================================================================================                
+                    var eventoInit = new TbEvento
+                    {
+                        TipoEvento= "1",
+                        FechaEvento= DateTime.Now,
+                        Estado = "CONFIRMADO",
+                        Observacion= dto.Observacion
+                        //Activo = true,
+                        //CreadoEn = DateTime.Now,
+                        //IdCreadoPor = usuarioAutenticado.IdUsuario,
+                        //CreadoPor = usuarioAutenticado.Email
+                    };
+                    _context.TbEventos.Add(eventoInit);
+                    await _context.SaveChangesAsync();
+                    // ================================================================================
+                    // 4. ALMACENAR EN EVENTO ORIGEN
+                    // ================================================================================                
+                    var eventoOrigen = new TbEventoOrigen
+                    {
+                        IdEvento= eventoInit.IdEvento,
+                        IdInstancia = plantaQwery.IdInstancia,
+                        IdLote= loteSave.IdLote,
+                        Volumen= dto.VolTotal,
+                        Observacion= dto.Observacion
+                        //Estado = "ACTIVO",
+                        //Activo = true,
+                        //CreadoEn = DateTime.Now,
+                        //IdCreadoPor = usuarioAutenticado.IdUsuario,
+                        //CreadoPor = usuarioAutenticado.Email
+                    };
+                    _context.TbEventoOrigens.Add(eventoOrigen);
+                    await _context.SaveChangesAsync();
 
-        //        // ================================================================================
-        //        // 3. CREAR EVENTO
-        //        // ================================================================================
-        //        var evento = new TbEvento
-        //        { 
 
-        //        }
-        //    }
-        //    catch (Exception ex)
-        //    {
-
-        //    }
-        //}
+                }
+                // ================================================================================
+                // 5. ALMACENO EN TABLA TBLOTEGLP LOS DATOS DE LOTESAVE
+                // ================================================================================
+                await transaccion.CommitAsync();
+                // ================================================================================
+                // 6. RETORNA RESULTADO
+                // ================================================================================
+                return dto;
+            }
+            catch (DbUpdateException ex)
+                when (ex.InnerException is PostgresException pgEx &&
+                      pgEx.SqlState == PostgresErrorCodes.UniqueViolation &&
+                      pgEx.ConstraintName == "uq_instancia_tipo_codigo")
+            {
+                throw new InvalidOperationException(
+                    $"El lote ya se encuentra registrada."
+                );
+            }
+        }
         private string GenerarCodigoTrazabilidad()
         {
             return $"TRZ-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid()
                 .ToString("N")[..6]
                 .ToUpper()}";
         }
-        private long ObtenerIdUsuario()
+        private (long IdUsuario, string Email) ObtenerIdUsuario()
         {
-            var idUsuarioClaim = _httpContextAccessor
-                .HttpContext?
-                .User
-                .FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = _httpContextAccessor.HttpContext?.User;
 
-            if (string.IsNullOrWhiteSpace(idUsuarioClaim))
-            {
-                throw new UnauthorizedAccessException(
-                    "No se pudo obtener el ID del usuario autenticado."
-                );
-            }
+            var IdUsuarioClaim = user?.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            if (!long.TryParse(idUsuarioClaim, out var idUsuario))
-            {
-                throw new UnauthorizedAccessException(
-                    "El ID del usuario no es válido."
-                );
-            }
+            var emailClain = user?.FindFirstValue(ClaimTypes.Email);
 
-            return idUsuario;
+            if (string.IsNullOrWhiteSpace(IdUsuarioClaim)) throw new UnauthorizedAccessException("No se pudo obtener el ID del usuario autenticado.");
+
+            if (!long.TryParse(IdUsuarioClaim, out var idUsuario)) throw new UnauthorizedAccessException("El ID del usuario no es válido.");
+
+            if (string.IsNullOrWhiteSpace(emailClain)) throw new UnauthorizedAccessException("No se pudo obtener el Correo del usuario autenticado.");
+
+
+            return (idUsuario, emailClain);
         }
     }
 }

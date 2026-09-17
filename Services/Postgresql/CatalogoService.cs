@@ -13,21 +13,22 @@ namespace backend_trazabilidad.Services.Postgresql
             _context = context;
         }
 
-        public async Task<List<SelectOptionDto>> ObtenerParametricasAsync() 
+        public async Task<List<SelectOptionDto>> ObtenerParametricasAsync()
         {
-            return await _context.TblParametricas
-                .AsNoTracking()
-                .Where(x => x.Estado == true)
-                .OrderBy(x => x.Id) 
-                .Select(x => new SelectOptionDto
-                {
-                    Id = x.Id, 
-                    Nombre = x.Nombre ?? string.Empty, 
-                    Descripcion = x.Descripcion ?? string.Empty,
-                    Valor = x.Valor ?? string.Empty,
-                    Estado = (short)(x.Estado ? 1 : 0), 
-                    Categoria = x.Categoria ?? string.Empty
-                })
+            return await
+                (
+                    from ti in _context.TbInstancia.AsNoTracking()
+                    join tp in _context.TbPlanta.AsNoTracking()
+                    on ti.IdInstancia equals tp.IdInstancia
+                    orderby ti.Codigo
+                    select new SelectOptionDto
+                    {
+                        IdPlanta = tp.IdPlanta,
+                        Nombre = (ti.Nombre ?? string.Empty).ToUpper(),
+                        Codigo = (ti.Codigo ?? string.Empty).ToUpper(),
+                        Departamento = tp.Departamento ?? string.Empty
+                    }
+                )
                 .ToListAsync();
         }
     }

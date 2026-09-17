@@ -57,17 +57,35 @@ namespace backend_trazabilidad.Controllers
 
         }
         [Authorize]
-        [HttpGet("usuario")]
-        public IActionResult ObtenerUsuario()
+        [HttpPost("addProd")]
+        public async Task<IActionResult> CrearProd([FromBody] CrearProduccionRequestDto dto)
         {
-            var idUsuario = User.FindFirstValue(
-                ClaimTypes.NameIdentifier
-            );
-
-            return Ok(new
+            try
             {
-                idUsuario
-            });
+                var resultado = await _produccionService.CrearProdAsync(dto);
+                return Ok(new
+                {
+                    exito = true,
+                    mensaje = "Lote registrada correctamente.",
+                    data = resultado
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new
+                {
+                    exito = false,
+                    mensaje = ex.Message
+                });
+            }
+            catch (Exception)
+            {
+                return StatusCode(500, new
+                {
+                    exito = false,
+                    mensaje = "Ocurrió un error al registrar la planta."
+                });
+            }
         }
     }
 }
