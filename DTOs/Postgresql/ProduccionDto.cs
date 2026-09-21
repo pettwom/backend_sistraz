@@ -12,5 +12,6 @@
         public string PuntoIngreso { get; set; } = string.Empty;
         public string Estado { get; set; } = string.Empty;
         public int TipoOperacion { get; set; }
+        public long IdPlanta { get; set; }
     }
 }

@@ -39,9 +39,10 @@ namespace backend_trazabilidad.Services.Postgresql
                 on teo.IdEvento equals te.IdEvento
 
                 join tc in _context.TbCertificados
-                on te.IdEvento equals tc.IdEvento
+                on te.IdEvento equals tc.IdEvento into tcGroup
+                from tc in tcGroup.DefaultIfEmpty()
 
-                where ti.IdTipoLugar == 1
+                where tp.TipoOperacion == 1 
 
                 orderby tlg.Codigo ascending
 
@@ -49,13 +50,14 @@ namespace backend_trazabilidad.Services.Postgresql
                 {
                     Lote = tlg.Codigo,
                     Nombre = ti.Codigo,
-                    NumCertificado = tc.NumeroCertificado,
+                    NumCertificado = tc != null ? tc.NumeroCertificado : null,
                     FechaMuestreo = tlg.FechaOrigen,
                     VolTotal = tlg.VolumenInicial,
                     Pais = tp.Pais,
                     PuntoIngreso = tp.PuntoIngreso,
-                    Estado = tlg.Estado,
-                    TipoOperacion = tp.TipoOperacion
+                    Estado = te.TipoEvento,
+                    TipoOperacion = tp.TipoOperacion,
+                    IdPlanta = tp.IdPlanta
                 }
                 ).AsNoTracking().ToListAsync();
             return lista;
@@ -134,9 +136,20 @@ namespace backend_trazabilidad.Services.Postgresql
                 // ================================================================================
                 // 1. BUSCAR PLANTA
                 // ================================================================================
+                Console.WriteLine("======================================");
+                Console.WriteLine($"PLANTA RECIBIDA: {dto.PlantaId}");
+                Console.WriteLine($"CERTIFICADO: {dto.NroCertificado}");
+                Console.WriteLine($"VOLUMEN: {dto.VolTotal}");
+                Console.WriteLine($"FECHA: {dto.FechaMuestra}");
+                Console.WriteLine("======================================");
                 var loteQwery = await _context.TbLoteGlps.FirstOrDefaultAsync(x => x.IdPlantaOrigen == dto.PlantaId);
                 var plantaQwery = await _context.TbPlanta.FirstOrDefaultAsync(x => x.IdPlanta == dto.PlantaId);
-
+                if (plantaQwery == null)
+                {
+                    throw new Exception(
+                        $"No existe la planta con id_planta = {dto.PlantaId}"
+                    );
+                }
                 if (loteQwery == null)
                 {
                     // ================================================================================
@@ -145,13 +158,12 @@ namespace backend_trazabilidad.Services.Postgresql
                     var loteSave = new TbLoteGlp
                     {
                         Codigo = GenerarCodigoTrazabilidad(),
-                        IdPlantaOrigen = dto.PlantaId,
-                        FechaOrigen = dto.FechaMuestra,
+                        IdPlantaOrigen = plantaQwery.IdPlanta,
+                        FechaOrigen = SinZonaHoraria(dto.FechaMuestra),
                         VolumenInicial = dto.VolTotal,
-                        Unidad = "Tn",
                         Estado = "ACTIVO",
                         Activo = true,
-                        CreadoEn = DateTime.Now,
+                        CreadoEn = SinZonaHoraria(DateTime.Now),
                         IdCreadoPor = usuarioAutenticado.IdUsuario,
                         CreadoPor = usuarioAutenticado.Email
                     };
@@ -162,10 +174,10 @@ namespace backend_trazabilidad.Services.Postgresql
                     // ================================================================================                
                     var eventoInit = new TbEvento
                     {
-                        TipoEvento= "1",
-                        FechaEvento= DateTime.Now,
+                        TipoEvento = "RECEPCION",
+                        FechaEvento = SinZonaHoraria(DateTime.Now),
                         Estado = "CONFIRMADO",
-                        Observacion= dto.Observacion
+                        Observacion = dto.Observacion
                         //Activo = true,
                         //CreadoEn = DateTime.Now,
                         //IdCreadoPor = usuarioAutenticado.IdUsuario,
@@ -178,11 +190,11 @@ namespace backend_trazabilidad.Services.Postgresql
                     // ================================================================================                
                     var eventoOrigen = new TbEventoOrigen
                     {
-                        IdEvento= eventoInit.IdEvento,
+                        IdEvento = eventoInit.IdEvento,
                         IdInstancia = plantaQwery.IdInstancia,
-                        IdLote= loteSave.IdLote,
-                        Volumen= dto.VolTotal,
-                        Observacion= dto.Observacion
+                        IdLote = loteSave.IdLote,
+                        Volumen = dto.VolTotal,
+                        Observacion = dto.Observacion
                         //Estado = "ACTIVO",
                         //Activo = true,
                         //CreadoEn = DateTime.Now,
@@ -212,6 +224,14 @@ namespace backend_trazabilidad.Services.Postgresql
                     $"El lote ya se encuentra registrada."
                 );
             }
+        }
+
+        private static DateTime SinZonaHoraria(DateTime fecha)
+        {
+            return DateTime.SpecifyKind(
+                fecha,
+                DateTimeKind.Unspecified
+            );
         }
         private string GenerarCodigoTrazabilidad()
         {

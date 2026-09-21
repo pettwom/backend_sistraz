@@ -43,6 +43,7 @@ public partial class TbLoteGlp
     public string? ActualizadoPor { get; set; }
 
     public string? EliminadoPor { get; set; }
+    public virtual TbPlantum PlantaOrigenNavigation { get; set; } = null!;
 
     public virtual ICollection<TbEventoComposicion> TbEventoComposicions { get; set; }
     = new List<TbEventoComposicion>();
@@ -52,4 +53,5 @@ public partial class TbLoteGlp
 
     public virtual ICollection<TbEventoOrigen> TbEventoOrigens { get; set; }
         = new List<TbEventoOrigen>();
+
 }

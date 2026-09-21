@@ -30,7 +30,7 @@ public partial class PostgresDbContext : DbContext
 
     public virtual DbSet<TbInstancium> TbInstancia { get; set; }
 
-    public virtual DbSet<TbLoteGlp>TbLoteGlps { get; set; }
+    public virtual DbSet<TbLoteGlp> TbLoteGlps { get; set; }
 
     public virtual DbSet<TbPlantum> TbPlanta { get; set; }
 
@@ -517,6 +517,10 @@ public partial class PostgresDbContext : DbContext
             entity.Property(e => e.VolumenInicial)
                 .HasPrecision(14, 3)
                 .HasColumnName("volumen_inicial");
+            entity.HasOne(d => d.PlantaOrigenNavigation)
+                .WithMany(p => p.TbLoteGlps)
+                .HasForeignKey(d => d.IdPlantaOrigen)
+                .OnDelete(DeleteBehavior.ClientSetNull);
         });
 
         modelBuilder.Entity<TbPlantum>(entity =>

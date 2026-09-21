@@ -31,6 +31,7 @@ builder.Services.AddDbContext<PostgresDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("PostgreSqlConection")
         );
+    options.EnableSensitiveDataLogging();
 });
 
 // ========================================
@@ -76,6 +77,7 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IMenuService, MenuService>();
 builder.Services.AddScoped<IProduccionService,ProduccionService>();
 builder.Services.AddScoped<ICatalogoService,CatalogoService>();
+builder.Services.AddScoped<ITrazabilidadViewService, TrazabilidadViewService>();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services
