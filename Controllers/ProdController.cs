@@ -89,8 +89,8 @@ namespace backend_trazabilidad.Controllers
             }
         }
         [Authorize]
-        [HttpGet("addDespachar")]
-        public async Task<IActionResult> CrearCisterna( ProdCisternaDto pcd) 
+        [HttpPost("addDespachar")]
+        public async Task<IActionResult> CrearCisterna([FromBody] ProdCisternaDto pcd) 
         {
             var resultado = await _produccionService.CrearCisternasAsync(pcd);
             return Ok(resultado);
