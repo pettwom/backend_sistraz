@@ -1,7 +1,8 @@
-﻿using Oracle.ManagedDataAccess.Client;
+﻿using backend_trazabilidad.DTOs.Octano;
+using backend_trazabilidad.DTOs.Oracle;
+using Oracle.ManagedDataAccess.Client;
 using System.Data;
 using System.Globalization;
-using backend_trazabilidad.DTOs.Oracle;
 
 
 namespace backend_trazabilidad.Services.Octano
@@ -32,7 +33,7 @@ namespace backend_trazabilidad.Services.Octano
         {
             var resultado = new List<ParametroCalidadDto>();
 
-            string connectionString =_configuration.GetConnectionString("ConexionOctabo")
+            string connectionString = _configuration.GetConnectionString("ConexionOctabo")
                 ?? throw new InvalidOperationException(
                     "No existe ConnectionStrings:ConexionOctabo.");
 
@@ -44,7 +45,10 @@ namespace backend_trazabilidad.Services.Octano
                 await connection.OpenAsync();
 
                 _logger.LogInformation(
-                    "Conexión Oracle abierta correctamente.");
+                    "Oracle OCTANO conectado. Tabla={Tabla}, Entidad={Entidad}",
+                    idTablaEspecificacion,
+                    idEntidad
+                );
 
                 await using var command =
                     connection.CreateCommand();
@@ -68,30 +72,29 @@ namespace backend_trazabilidad.Services.Octano
                 // ==========================================
 
                 command.Parameters.Add(
-                    new OracleParameter
-                    {
-                        OracleDbType = OracleDbType.Varchar2,
+                        new OracleParameter
+                        {
+                            ParameterName = "I_CREDENCIAL",
+                            OracleDbType = OracleDbType.Varchar2,
+                            Direction = ParameterDirection.Input,
+                            Value = credencial
+                        }
 
-                        Direction =
-                            ParameterDirection.Input,
-
-                        Value = credencial
-                    });
+                  );
 
                 // ==========================================
                 // 2. ID TABLA ESPECIFICACIÓN
                 // ==========================================
 
                 command.Parameters.Add(
-                    new OracleParameter
-                    {
-                        OracleDbType = OracleDbType.Decimal,
-
-                        Direction =
-                            ParameterDirection.Input,
-
-                        Value = idTablaEspecificacion
-                    });
+                        new OracleParameter
+                        {
+                            ParameterName = "I_ID_TABLA_ESPEC",
+                            OracleDbType = OracleDbType.Decimal,
+                            Direction = ParameterDirection.Input,
+                            Value = idTablaEspecificacion
+                        }
+                   );
 
                 // ==========================================
                 // 3. ID ENTIDAD
@@ -100,36 +103,36 @@ namespace backend_trazabilidad.Services.Octano
                 command.Parameters.Add(
                     new OracleParameter
                     {
+                        ParameterName = "I_ID_ENTIDAD",
                         OracleDbType = OracleDbType.Decimal,
-
-                        Direction =
-                            ParameterDirection.Input,
-
+                        Direction = ParameterDirection.Input,
                         Value = idEntidad
-                    });
+                    }
+                    );
 
                 // ==========================================
                 // 4. FECHA
                 // OCTANO la envía como yyyyMMddHHmmss
                 // ==========================================
 
-                decimal fechaOracle = Convert.ToDecimal(
-                    fecha.ToString(
-                        "yyyyMMddHHmmss",
-                        CultureInfo.InvariantCulture
-                    )
-                );
+                decimal fechaOracle =
+                    Convert.ToDecimal(
+                        fecha.ToString(
+                            "yyyyMMddHHmmss",
+                            CultureInfo.InvariantCulture
+                        )
+                    );
+
 
                 command.Parameters.Add(
                     new OracleParameter
                     {
+                        ParameterName = "I_FECHA",
                         OracleDbType = OracleDbType.Decimal,
-
-                        Direction =
-                            ParameterDirection.Input,
-
+                        Direction = ParameterDirection.Input,
                         Value = fechaOracle
-                    });
+                    }
+                );
 
                 // ==========================================
                 // 5. CITE
@@ -138,29 +141,33 @@ namespace backend_trazabilidad.Services.Octano
                 command.Parameters.Add(
                     new OracleParameter
                     {
-                        OracleDbType = OracleDbType.Decimal,
-
-                        Direction =
-                            ParameterDirection.Input,
-
+                        ParameterName = "I_CITE",
+                        OracleDbType = OracleDbType.Varchar2,
+                        Direction = ParameterDirection.Input,
                         Value = string.IsNullOrWhiteSpace(cite)
-                            ? "0"
-                            : cite
-                    });
+                        ? "0"
+                        : cite
+                    }
+                    );
 
                 // ==========================================
                 // 6. CURSOR DE SALIDA
                 // ==========================================
 
+
+
                 command.Parameters.Add(
-                    new OracleParameter
-                    {
-                        OracleDbType = OracleDbType.RefCursor,
+                     new OracleParameter
+                     {
+                         ParameterName =
+            "O_TABLA_ESPEC_FORMULARIO_CTY",
 
-                        Direction =
-                            ParameterDirection.Output
-                    });
+                         OracleDbType =
+            OracleDbType.RefCursor,
 
+                         Direction =
+            ParameterDirection.Output
+                     });
 
                 // ==========================================
                 // EJECUTAR PROCEDIMIENTO
@@ -172,6 +179,9 @@ namespace backend_trazabilidad.Services.Octano
                 // ==========================================
                 // LEER RESULTADO
                 // ==========================================
+                System.Diagnostics.Debug.WriteLine("================================ ");
+                System.Diagnostics.Debug.WriteLine(reader);
+                System.Diagnostics.Debug.WriteLine("================================ ");
 
                 while (await reader.ReadAsync())
                 {
@@ -280,6 +290,257 @@ namespace backend_trazabilidad.Services.Octano
             }
         }
 
+        public async Task<List<ReporteCalidadDto>>
+    ObtenerReporteCalidadAsync(
+        string credencial,
+        string cite)
+        {
+            var resultado =
+                new List<ReporteCalidadDto>();
+
+            string connectionString =
+                _configuration
+                    .GetConnectionString("ConexionOctabo")
+                ?? throw new InvalidOperationException(
+                    "No existe ConexionOctabo."
+                );
+
+            await using var connection =
+                new OracleConnection(connectionString);
+
+            await connection.OpenAsync();
+
+            await using var command =
+                connection.CreateCommand();
+
+            command.CommandText =
+                "APP_CANTCAL.PUSR_REPORTES.P_REPORTE_CALIDAD";
+
+            command.CommandType =
+                CommandType.StoredProcedure;
+
+            command.BindByName = true;
+
+
+            // 1. CREDENCIAL
+
+            command.Parameters.Add(
+                new OracleParameter(
+                    "I_CREDENCIAL",
+                    OracleDbType.Varchar2
+                )
+                {
+                    Direction =
+                        ParameterDirection.Input,
+
+                    Value =
+                        credencial
+                }
+            );
+
+
+            // 2. CITE
+
+            command.Parameters.Add(
+                new OracleParameter(
+                    "I_CITE_GENERADO",
+                    OracleDbType.Varchar2
+                )
+                {
+                    Direction =
+                        ParameterDirection.Input,
+
+                    Value =
+                        cite
+                }
+            );
+
+
+            // 3. CURSOR
+
+            command.Parameters.Add(
+                new OracleParameter(
+                    "O_REPORTE_CALIDAD",
+                    OracleDbType.RefCursor
+                )
+                {
+                    Direction =
+                        ParameterDirection.Output
+                }
+            );
+
+
+            await using var reader =
+                await command.ExecuteReaderAsync();
+
+
+            while (await reader.ReadAsync())
+            {
+                resultado.Add(
+                        new ReporteCalidadDto
+                        {
+                            IdRegistroCalidad =
+                            GetDecimal(
+                                reader,
+                                "ID_REGISTRO_CALIDAD"
+                            ),
+
+                            IdTablaEspec =
+                            GetDecimal(
+                                reader,
+                                "ID_TABLA_ESPEC"
+                            ),
+
+                            IdPruebaCalidad =
+                            GetDecimal(
+                                reader,
+                                "ID_PRUEBA_CALIDAD"
+                            ),
+
+                            Descripcion =
+                            GetString(
+                                reader,
+                                "DESCRIPCION"
+                            ),
+
+                            CodigoAstm =
+                            GetString(
+                                reader,
+                                "CODIGO_ASTM"
+                            ),
+
+                            CodigoUnidad =
+                            GetString(
+                                reader,
+                                "CODIGO_UNIDAD"
+                            ),
+
+                            ValorAlfanumerico =
+                            GetString(
+                                reader,
+                                "VALOR_ALFANUMERICO"
+                            ),
+
+                            IdPuntoCustodio =
+                            GetDecimal(
+                                reader,
+                                "ID_PUNTO_CUSTODIO"
+                            ),
+
+                            PuntoCustodio =
+                            GetString(
+                                reader,
+                                "PUNTO_CUSTODIO"
+                            ),
+
+                            Volumen =
+                            GetDecimal(
+                                reader,
+                                "VOLUMEN_OP_DEBE"
+                            ),
+
+                            IdProducto =
+                            GetDecimal(
+                                reader,
+                                "ID_PRODUCTO"
+                            ),
+
+                            Producto =
+                            GetString(
+                                reader,
+                                "PRODUCTO"
+                            ),
+
+                            CodigoUnidadVolumen =
+                            GetString(
+                                reader,
+                                "CODIGO_UNIDAD_VOL"
+                            ),
+
+                            CiteDocumento =
+                            GetString(
+                                reader,
+                                "CITE_DOCUMENTO"
+                            ),
+
+                            IdEntidad =
+                            GetDecimal(
+                                reader,
+                                "ID_ENTIDAD"
+                            ),
+
+                            Entidad =
+                            GetString(
+                                reader,
+                                "ENTIDAD"
+                            ),
+
+                            FechaOperacion =
+                            GetDateTime(
+                                reader,
+                                "FECHA_OPERACION"
+                            ),
+
+                            ValorLote =
+                            GetString(
+                                reader,
+                                "VALOR_LOTE"
+                            ),
+
+                            Observaciones =
+                            GetString(
+                                reader,
+                                "OBSERVACIONES"
+                            ),
+
+                            ProductoPadre =
+                            GetString(
+                                reader,
+                                "PRODUCTO_PADRE"
+                            ),
+
+                            IdTipoActividad =
+                            GetDecimal(
+                                reader,
+                                "ID_TIPO_ACTIVIDAD"
+                            ),
+
+                            TipoActividad =
+                            GetString(
+                                reader,
+                                "TIPO_ACTIVIDAD"
+                            ),
+
+                            RutaInternacion =
+                            GetString(
+                                reader,
+                                "RUTA_INTERNACION"
+                            ),
+
+                            EmpresaProveedora =
+                            GetString(
+                                reader,
+                                "EMPRESA_PROVEEDORA"
+                            ),
+
+                            TanqueExterno =
+                            GetString(
+                                reader,
+                                "TK_ORIG_EXTERNO"
+                            ),
+
+                            NroLoteVerif =
+                            GetString(
+                                reader,
+                                "NRO_LOTE_VERIF"
+                            )
+                        }
+                );
+            }
+
+            return resultado;
+        }
+
 
         // ==================================================
         // MÉTODOS AUXILIARES
@@ -333,5 +594,27 @@ namespace backend_trazabilidad.Services.Octano
                 reader.GetValue(ordinal)
             );
         }
+
+        private static DateTime? GetDateTime(
+            OracleDataReader reader,
+            string columnName)
+                {
+                    try
+                    {
+                        int ordinal =
+                            reader.GetOrdinal(columnName);
+
+                        if (reader.IsDBNull(ordinal))
+                            return null;
+
+                        return Convert.ToDateTime(
+                            reader.GetValue(ordinal)
+                        );
+                    }
+                    catch
+                    {
+                        return null;
+                    }
+                }
     }
 }

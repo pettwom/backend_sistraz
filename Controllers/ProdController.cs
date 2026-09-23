@@ -1,5 +1,6 @@
 ﻿using backend_trazabilidad.DTOs.Postgresql;
 using backend_trazabilidad.Services.Postgresql;
+using DocumentFormat.OpenXml.Office2010.ExcelAc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -86,6 +87,13 @@ namespace backend_trazabilidad.Controllers
                     mensaje = "Ocurrió un error al registrar la planta."
                 });
             }
+        }
+        [Authorize]
+        [HttpGet("addDespachar")]
+        public async Task<IActionResult> CrearCisterna([FromBody] ProdCisternaDto pcd) 
+        {
+            var resultado = await _produccionService.CrearCisternasAsync(pcd);
+            return Ok(resultado);
         }
     }
 }

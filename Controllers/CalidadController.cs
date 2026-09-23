@@ -16,24 +16,51 @@ namespace backend_trazabilidad.Controllers
             _service = service;
         }
 
+        private readonly string I_CREDENCIAL = "83809AD945F1F72D0EA9FDA0E599E0B3";
+
         [HttpGet("parametros")]
-        public async Task<IActionResult> ObtenerParametros(
-            [FromQuery] decimal idTabla,
-            [FromQuery] decimal idEntidad)
+        public async Task<IActionResult> ObtenerParametros()
         {
             System.Diagnostics.Debug.WriteLine("===================================================================");
-            System.Diagnostics.Debug.WriteLine("1. Esto es el id IdTabla: =>>" + idTabla);
-            System.Diagnostics.Debug.WriteLine("2. Esto es el id IdEntidad: =>>" + idEntidad);
             System.Diagnostics.Debug.WriteLine("===================================================================");
+            decimal idTabla = 1;
+
+            decimal idEntidad = 36252;
+            DateTime fecha =
+                        new DateTime(
+                            2015,
+                            8,
+                            17,
+                            15,
+                            56,
+                            34
+                        );
+            string cite = "0";
             var resultado =
                 await _service.ObtenerParametrosAsync(
-                    credencial: "eyJhbGciOiJIUzI1NiJ9.eyJVc2VybmFtZSI6IlJFREVTIEDBUyJ9.JI2CdBI3HSV0Awg_rWcmnKvg_GRmnHUTXx3jpgGlG14",
-                    idTablaEspecificacion: 54,
+                    credencial: I_CREDENCIAL,
+                    //credencial: "eyJhbGciOiJIUzI1NiJ9.eyJVc2VybmFtZSI6IlJFREVTIEDBUyJ9.JI2CdBI3HSV0Awg_rWcmnKvg_GRmnHUTXx3jpgGlG14",
+                    idTablaEspecificacion: idTabla,
                     idEntidad: idEntidad,
-                    fecha: DateTime.Now,
-                    cite: "0"
+                    fecha: fecha,
+                    cite: cite
                 );
+            return Ok(new
+            {
+                idTabla,
+                idEntidad,
+                fecha,
+                cite,
+                cantidad = resultado.Count,
+                datos = resultado
+            });
+        }
 
+        [HttpGet("reporte")]
+        public async Task<IActionResult> ObtenerReporte()
+        {
+            var cite = "ANH-REB-DO 0011";
+            var resultado = await _service.ObtenerReporteCalidadAsync(I_CREDENCIAL, cite);
             return Ok(resultado);
         }
     }

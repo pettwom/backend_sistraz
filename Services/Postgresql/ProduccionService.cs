@@ -125,6 +125,7 @@ namespace backend_trazabilidad.Services.Postgresql
             }
 
         }
+        
         public async Task<CrearProduccionRequestDto> CrearProdAsync(CrearProduccionRequestDto dto)
         {
 
@@ -226,6 +227,13 @@ namespace backend_trazabilidad.Services.Postgresql
             }
         }
 
+        public async Task<ProdCisternaDto> CrearCisternasAsync(ProdCisternaDto pcd)
+        {
+            var instancia = _context.TbPlanta.FirstOrDefaultAsync(x => x.IdPlanta == pcd.IdPlanta);
+            System.Diagnostics.Debug.WriteLine(instancia);
+            return null;
+        }
+
         private static DateTime SinZonaHoraria(DateTime fecha)
         {
             return DateTime.SpecifyKind(
@@ -233,12 +241,14 @@ namespace backend_trazabilidad.Services.Postgresql
                 DateTimeKind.Unspecified
             );
         }
+
         private string GenerarCodigoTrazabilidad()
         {
             return $"TRZ-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid()
                 .ToString("N")[..6]
                 .ToUpper()}";
         }
+        
         private (long IdUsuario, string Email) ObtenerIdUsuario()
         {
             var user = _httpContextAccessor.HttpContext?.User;
