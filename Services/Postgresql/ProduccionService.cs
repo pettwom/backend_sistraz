@@ -227,8 +227,19 @@ namespace backend_trazabilidad.Services.Postgresql
             }
         }
 
-        public async Task<ProdCisternaDto> CrearCisternasAsync(ProdCisternaDto pcd)
+        public async Task<CrearCisternasDto> CrearCisternasAsync(
+     ProdCisternaDto pcd)
         {
+            Console.WriteLine("=====================================");
+            Console.WriteLine("ENTRANDO A CrearCisternasAsync");
+            Console.WriteLine($"ID PLANTA RECIBIDO: {pcd.IdPlanta}");
+            Console.WriteLine($"CANTIDAD CISTERNAS: {pcd.Cisterna.Count}");
+            Console.WriteLine("=====================================");
+
+            // =============================================
+            // BUSCAR PLANTA
+            // =============================================
+
             var planta = await _context.TbPlanta
                 .FirstOrDefaultAsync(
                     x => x.IdPlanta == pcd.IdPlanta
@@ -236,32 +247,49 @@ namespace backend_trazabilidad.Services.Postgresql
 
             if (planta == null)
             {
+                Console.WriteLine(
+                    $"NO EXISTE LA PLANTA {pcd.IdPlanta}"
+                );
+
                 throw new Exception(
                     $"No existe la planta {pcd.IdPlanta}"
                 );
             }
+
+            System.Diagnostics.Debug.WriteLine($"PLANTA ENCONTRADA: {planta.IdPlanta}");
+            System.Diagnostics.Debug.WriteLine($"ID INSTANCIA: {planta.IdInstancia}");
+
+            // =============================================
+            // MOSTRAR CISTERNAS
+            // =============================================
 
             foreach (var item in pcd.Cisterna)
             {
                 if (item == null)
                     continue;
 
-                Console.WriteLine(
-                    $"PLACA: {item["placa"]}"
-                );
+                var placa =
+                    item["placa"]?.ToString();
 
-                Console.WriteLine(
-                    $"CONDUCTOR: {item["conductor"]}"
-                );
+                var conductor =
+                    item["conductor"]?.ToString();
 
-                Console.WriteLine(
-                    $"PRECINTO: {item["presinto"]}"
-                );
+                var presinto =
+                    item["presinto"]?.ToString();
 
-                Console.WriteLine(
-                    $"VOLUMEN: {item["volumen"]}"
-                );
+                var volumen =
+                    item["volumen"]?.ToString();
+
+                Console.WriteLine("---------------------------------");
+                Console.WriteLine($"PLACA: {placa}");
+                Console.WriteLine($"CONDUCTOR: {conductor}");
+                Console.WriteLine($"PRECINTO: {presinto}");
+                Console.WriteLine($"VOLUMEN: {volumen}");
+                Console.WriteLine("---------------------------------");
             }
+
+            Console.WriteLine("FIN CrearCisternasAsync");
+            Console.WriteLine("=====================================");
 
             return pcd;
         }
