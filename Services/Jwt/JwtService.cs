@@ -65,8 +65,8 @@ namespace backend_trazabilidad.Services.Jwt
                     ),
 
                     new(
-                        "entidad",
-                        usuario.Entidad
+                        "idEntidad",
+                        usuario.IdEntidad?.ToString() ?? ""
                     ),
                     new Claim("idUsuario", usuario.IdUsuarioHydro.ToString()),
                 };

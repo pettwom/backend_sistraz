@@ -1,7 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using backend_trazabilidad.Models.Postgresql;
 using Microsoft.EntityFrameworkCore;
-using backend_trazabilidad.Models.Postgresql;
+using System;
+using System.Collections.Generic;
 
 namespace backend_trazabilidad;
 
@@ -41,6 +41,8 @@ public partial class PostgresDbContext : DbContext
     public virtual DbSet<TrazabilidadView> TrazabilidadViews { get; set; }
 
     public virtual DbSet<TblParametrica> TblParametricas { get; set; }
+
+    public virtual DbSet<TbCisternaDetalle> TbCisternaDetalles { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -690,6 +692,73 @@ public partial class PostgresDbContext : DbContext
             entity.Property(e => e.Valor)
                 .HasMaxLength(255)
                 .HasColumnName("valor");
+        });
+
+        modelBuilder.Entity<TbCisternaDetalle>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("tb_cisterna_detalle_pk");
+
+            entity.ToTable("tb_cisterna_detalle", "trazabilidad_op");
+
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Activo).HasColumnName("activo");
+            entity.Property(e => e.ActualizadoEn)
+                .HasColumnType("timestamp(0) without time zone")
+                .HasColumnName("actualizado_en");
+            entity.Property(e => e.ActualizadoPor)
+                .HasMaxLength(200)
+                .HasColumnName("actualizado_por");
+            entity.Property(e => e.Cliente)
+                .HasMaxLength(255)
+                .HasColumnName("cliente");
+            entity.Property(e => e.Conductor)
+                .HasMaxLength(255)
+                .HasColumnName("conductor");
+            entity.Property(e => e.CreadoEn)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp(0) without time zone")
+                .HasColumnName("creado_en");
+            entity.Property(e => e.CreadoPor)
+                .HasMaxLength(200)
+                .HasColumnName("creado_por");
+            entity.Property(e => e.EliminadoEn)
+                .HasColumnType("timestamp(0) without time zone")
+                .HasColumnName("eliminado_en");
+            entity.Property(e => e.EliminadoPor)
+                .HasMaxLength(200)
+                .HasColumnName("eliminado_por");
+            entity.Property(e => e.EmpresaTrans)
+                .HasMaxLength(50)
+                .HasColumnName("empresa_trans");
+            entity.Property(e => e.Estado)
+                .HasMaxLength(50)
+                .HasColumnName("estado");
+            entity.Property(e => e.Fecha)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("fecha");
+            entity.Property(e => e.Gravedad).HasColumnName("gravedad");
+            entity.Property(e => e.IdActualizadoPor).HasColumnName("id_actualizado_por");
+            entity.Property(e => e.IdCreadoPor).HasColumnName("id_creado_por");
+            entity.Property(e => e.IdEliminadoPor).HasColumnName("id_eliminado_por");
+            entity.Property(e => e.Matadata)
+                .HasColumnType("jsonb")
+                .HasColumnName("matadata");
+            entity.Property(e => e.NroCre)
+                .HasMaxLength(50)
+                .HasColumnName("nro_cre");
+            entity.Property(e => e.NroCreFenix)
+                .HasMaxLength(50)
+                .HasColumnName("nro_cre_fenix");
+            entity.Property(e => e.PesoKg).HasColumnName("peso_kg");
+            entity.Property(e => e.PesoTm).HasColumnName("peso_tm");
+            entity.Property(e => e.Placa)
+                .HasMaxLength(50)
+                .HasColumnName("placa");
+            entity.Property(e => e.PlantaDescarga)
+                .HasMaxLength(255)
+                .HasColumnName("planta_descarga");
+            entity.Property(e => e.VolBbls).HasColumnName("vol_bbls");
+            entity.Property(e => e.VolM3).HasColumnName("vol_m3");
         });
 
         OnModelCreatingPartial(modelBuilder);

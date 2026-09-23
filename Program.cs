@@ -1,16 +1,17 @@
-using System.Text;
+using backend_trazabilidad;
 using backend_trazabilidad.Services.Auth;
 using backend_trazabilidad.Services.Hydro;
 using backend_trazabilidad.Services.Jwt;
 using backend_trazabilidad.Services.Menu;
+using backend_trazabilidad.Services.Octano;
+using backend_trazabilidad.Services.Postgresql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using backend_trazabilidad;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Oracle.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Npgsql;
-using backend_trazabilidad.Services.Postgresql;
+using Oracle.EntityFrameworkCore;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 // ========================================
@@ -78,6 +79,9 @@ builder.Services.AddScoped<IMenuService, MenuService>();
 builder.Services.AddScoped<IProduccionService,ProduccionService>();
 builder.Services.AddScoped<ICatalogoService,CatalogoService>();
 builder.Services.AddScoped<ITrazabilidadViewService, TrazabilidadViewService>();
+builder.Services.AddScoped<CalidadOctanoService>();
+builder.Services.AddScoped<IExcelService, ExcelService>();
+//builder.Services.AddScoped<ICalidadOctanoService, CalidadOctanoService>();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services
