@@ -42,7 +42,7 @@ namespace backend_trazabilidad.Services.Postgresql
                 on te.IdEvento equals tc.IdEvento into tcGroup
                 from tc in tcGroup.DefaultIfEmpty()
 
-                where tp.TipoOperacion == 1 
+                where tp.TipoOperacion == 1
 
                 orderby tlg.Codigo ascending
 
@@ -125,7 +125,7 @@ namespace backend_trazabilidad.Services.Postgresql
             }
 
         }
-        
+
         public async Task<CrearProduccionRequestDto> CrearProdAsync(CrearProduccionRequestDto dto)
         {
 
@@ -229,9 +229,41 @@ namespace backend_trazabilidad.Services.Postgresql
 
         public async Task<ProdCisternaDto> CrearCisternasAsync(ProdCisternaDto pcd)
         {
-            var instancia = _context.TbPlanta.FirstOrDefaultAsync(x => x.IdPlanta == pcd.IdPlanta);
-            System.Diagnostics.Debug.WriteLine(instancia);
-            return null;
+            var planta = await _context.TbPlanta
+                .FirstOrDefaultAsync(
+                    x => x.IdPlanta == pcd.IdPlanta
+                );
+
+            if (planta == null)
+            {
+                throw new Exception(
+                    $"No existe la planta {pcd.IdPlanta}"
+                );
+            }
+
+            foreach (var item in pcd.Cisterna)
+            {
+                if (item == null)
+                    continue;
+
+                Console.WriteLine(
+                    $"PLACA: {item["placa"]}"
+                );
+
+                Console.WriteLine(
+                    $"CONDUCTOR: {item["conductor"]}"
+                );
+
+                Console.WriteLine(
+                    $"PRECINTO: {item["presinto"]}"
+                );
+
+                Console.WriteLine(
+                    $"VOLUMEN: {item["volumen"]}"
+                );
+            }
+
+            return pcd;
         }
 
         private static DateTime SinZonaHoraria(DateTime fecha)
@@ -248,7 +280,7 @@ namespace backend_trazabilidad.Services.Postgresql
                 .ToString("N")[..6]
                 .ToUpper()}";
         }
-        
+
         private (long IdUsuario, string Email) ObtenerIdUsuario()
         {
             var user = _httpContextAccessor.HttpContext?.User;

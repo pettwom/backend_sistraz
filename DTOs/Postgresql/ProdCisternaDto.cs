@@ -7,4 +7,5 @@ namespace backend_trazabilidad.DTOs.Postgresql
         public long IdPlanta { get; set; }
         public JsonArray Cisterna { get; set; } = new();
     }
+
 }
