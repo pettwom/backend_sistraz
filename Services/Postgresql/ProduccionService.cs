@@ -239,7 +239,7 @@ namespace backend_trazabilidad.Services.Postgresql
             System.Diagnostics.Debug.WriteLine($"TOTAL CISTERNAS: {pcd.Cisterna}");
             System.Diagnostics.Debug.WriteLine("=====================================");
             var usuarioAutenticado = ObtenerIdUsuario();
-            await using var Instancia = null;
+            TbInstancium? Instancia = null;
             await using var transaccion = await _context.Database.BeginTransactionAsync();
 
             // =============================================
