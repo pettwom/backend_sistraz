@@ -282,7 +282,13 @@ namespace backend_trazabilidad.Services.Postgresql
                 };
                 _context.TbInstancia.Add(Instancia);
                 await _context.SaveChangesAsync();
-
+                System.Diagnostics.Debug.WriteLine("---------------------------------");
+                System.Diagnostics.Debug.WriteLine($"id_cisterna_detalle: {Instancia.IdInstancia}");
+                System.Diagnostics.Debug.WriteLine($"id_cisterna_detalle: {item.Id}");
+                System.Diagnostics.Debug.WriteLine($"id_cisterna_detalle: {DateTime.Now}");
+                System.Diagnostics.Debug.WriteLine($"id_cisterna_detalle: {usuarioAutenticado.IdUsuario}");
+                System.Diagnostics.Debug.WriteLine($"id_cisterna_detalle: {usuarioAutenticado.Email.Split("@")[0].ToUpper()}");
+                System.Diagnostics.Debug.WriteLine("---------------------------------");
                 var SaveCist = new TbCisterna
                 {
                     IdInstancia = Instancia.IdInstancia,
