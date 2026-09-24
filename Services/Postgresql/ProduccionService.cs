@@ -21,7 +21,7 @@ namespace backend_trazabilidad.Services.Postgresql
             _context = context;
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
-            _IEventoService= IEventoService
+            _IEventoService = IEventoService;
         }
 
         public async Task<List<ProduccionDto>> ObtenerListadoAsync()
@@ -281,7 +281,7 @@ namespace backend_trazabilidad.Services.Postgresql
                     Activo= true,
                     CreadoEn = DateTime.Now,
                     IdCreadoPor = usuarioAutenticado.IdUsuario,
-                    CreadoPor = usuarioAutenticado.Email.Split("/")[0].ToUpper()
+                    CreadoPor = usuarioAutenticado.Email.Split("@")[0].ToUpper()
                 };
                 _context.TbInstancia.Add(Instancia);
                 await _context.SaveChangesAsync();
@@ -301,11 +301,11 @@ namespace backend_trazabilidad.Services.Postgresql
                     Activo= true,
                     CreadoEn = DateTime.Now,
                     IdCreadoPor = usuarioAutenticado.IdUsuario,
-                    CreadoPor = usuarioAutenticado.Email.Split("/")[0].ToUpper()
+                    CreadoPor = usuarioAutenticado.Email.Split("@")[0].ToUpper()
                 };
                 _context.TbCisternas.Add(SaveCist);
                 await _context.SaveChangesAsync();
-  
+
                 System.Diagnostics.Debug.WriteLine("---------------------------------");
                 System.Diagnostics.Debug.WriteLine($"PLACA: {id_cisterna}");
                 System.Diagnostics.Debug.WriteLine($"PLACA: {Cist.Conductor}");
@@ -321,10 +321,10 @@ namespace backend_trazabilidad.Services.Postgresql
                 TipoAccion = "DESTINO",
                 TipoEvento = "DESPACHO",
                 Descripcion = "",
-                Data = pcd.Cisterna,
-                EtapaFlujo = "TRANSPORTE"
+                Data = pcd.Cisterna.Select(x => new DataDto{Id = x.Id}).ToList(),
+                EtapaFlujo = "CISTERNA"
             };
-            await _IEventoService.AlmacenarEvento(EventoRequestDto);
+            await _IEventoService.AlmacenarEvento(eventosDto);
 
             System.Diagnostics.Debug.WriteLine("FIN CrearCisternasAsync");
             System.Diagnostics.Debug.WriteLine("=====================================");
