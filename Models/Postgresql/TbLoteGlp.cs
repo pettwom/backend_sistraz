@@ -3,9 +3,6 @@ using System.Collections.Generic;
 
 namespace backend_trazabilidad.Models.Postgresql;
 
-/// <summary>
-/// Identidad del GLP trazable. El código del lote se mantiene a través de los eventos.
-/// </summary>
 public partial class TbLoteGlp
 {
     public long IdLote { get; set; }
@@ -43,15 +40,12 @@ public partial class TbLoteGlp
     public string? ActualizadoPor { get; set; }
 
     public string? EliminadoPor { get; set; }
-    public virtual TbPlantum PlantaOrigenNavigation { get; set; } = null!;
 
-    public virtual ICollection<TbEventoComposicion> TbEventoComposicions { get; set; }
-    = new List<TbEventoComposicion>();
+    public virtual TbPlantum IdPlantaOrigenNavigation { get; set; } = null!;
 
-    public virtual ICollection<TbEventoDestino> TbEventoDestinos { get; set; }
-        = new List<TbEventoDestino>();
+    public virtual ICollection<TbEventoComposicion> TbEventoComposicions { get; set; } = new List<TbEventoComposicion>();
 
-    public virtual ICollection<TbEventoOrigen> TbEventoOrigens { get; set; }
-        = new List<TbEventoOrigen>();
+    public virtual ICollection<TbEventoDestino> TbEventoDestinos { get; set; } = new List<TbEventoDestino>();
 
+    public virtual ICollection<TbEventoOrigen> TbEventoOrigens { get; set; } = new List<TbEventoOrigen>();
 }

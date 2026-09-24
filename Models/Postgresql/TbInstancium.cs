@@ -3,9 +3,6 @@ using System.Collections.Generic;
 
 namespace backend_trazabilidad.Models.Postgresql;
 
-/// <summary>
-/// Superentidad que asigna un ID universal a cada planta, cisterna, tanque, engarrafadora o distribuidor. Este id_instancia es el ID de origen/destino usado por los eventos.
-/// </summary>
 public partial class TbInstancium
 {
     public long IdInstancia { get; set; }
@@ -22,17 +19,29 @@ public partial class TbInstancium
 
     public bool Estado { get; set; }
 
-    public long Usucre { get; set; }
+    public string? Matadata { get; set; }
 
-    public DateTime Feccre { get; set; }
+    public bool Activo { get; set; }
 
-    public long? Usumod { get; set; }
+    public DateTime CreadoEn { get; set; }
 
-    public DateTime? Fecmod { get; set; }
+    public DateTime? ActualizadoEn { get; set; }
+
+    public DateTime? EliminadoEn { get; set; }
+
+    public long? IdCreadoPor { get; set; }
+
+    public long? IdActualizadoPor { get; set; }
+
+    public long? IdEliminadoPor { get; set; }
+
+    public string? CreadoPor { get; set; }
+
+    public string? ActualizadoPor { get; set; }
+
+    public string? EliminadoPor { get; set; }
 
     public virtual TbTipoLugar IdTipoLugarNavigation { get; set; } = null!;
-
-    public virtual TbCisterna? TbCisterna { get; set; }
 
     public virtual TbDistribuidor? TbDistribuidor { get; set; }
 

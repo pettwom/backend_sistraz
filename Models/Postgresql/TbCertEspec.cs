@@ -3,21 +3,23 @@ using System.Collections.Generic;
 
 namespace backend_trazabilidad.Models.Postgresql;
 
-public partial class TbEventoOrigen
+public partial class TbCertEspec
 {
-    public long IdEventoOrigen { get; set; }
+    public int Id { get; set; }
 
-    public long IdEvento { get; set; }
+    public string? DescEspec { get; set; }
 
-    public long IdInstancia { get; set; }
+    public string? MinEspec { get; set; }
 
-    public long IdLote { get; set; }
+    public string? MaxEspec { get; set; }
 
-    public decimal Volumen { get; set; }
+    public string? Unidad { get; set; }
 
-    public decimal? Porcentaje { get; set; }
+    public string? MetAltern1 { get; set; }
 
-    public string? Observacion { get; set; }
+    public string? MetAltern2 { get; set; }
+
+    public string? Estado { get; set; }
 
     public string? Matadata { get; set; }
 
@@ -41,9 +43,5 @@ public partial class TbEventoOrigen
 
     public string? EliminadoPor { get; set; }
 
-    public virtual TbEvento IdEventoNavigation { get; set; } = null!;
-
-    public virtual TbInstancium IdInstanciaNavigation { get; set; } = null!;
-
-    public virtual TbLoteGlp IdLoteNavigation { get; set; } = null!;
+    public virtual ICollection<TbParamCert> TbParamCerts { get; set; } = new List<TbParamCert>();
 }

@@ -5,7 +5,10 @@ namespace backend_trazabilidad.DTOs.Postgresql
     public class ProdCisternaDto
     {
         public long IdPlanta { get; set; }
-        public JsonArray Cisterna { get; set; } = new();
+        public List<CisternaSeleccionadasDto> Cisterna { get; set; } = new();
     }
-
+    public class CisternaSeleccionadasDto
+    { 
+        public long Id { get; set; }
+    }
 }

@@ -3,9 +3,6 @@ using System.Collections.Generic;
 
 namespace backend_trazabilidad.Models.Postgresql;
 
-/// <summary>
-/// Hecho ocurrido con el GLP. Agrupa sus orígenes, destinos y certificados.
-/// </summary>
 public partial class TbEvento
 {
     public long IdEvento { get; set; }
@@ -24,7 +21,27 @@ public partial class TbEvento
 
     public DateTime Feccre { get; set; }
 
-    public virtual ICollection<TbCertificado> TbCertificados { get; set; } = new List<TbCertificado>();
+    public string? Matadata { get; set; }
+
+    public bool Activo { get; set; }
+
+    public DateTime CreadoEn { get; set; }
+
+    public DateTime? ActualizadoEn { get; set; }
+
+    public DateTime? EliminadoEn { get; set; }
+
+    public long? IdCreadoPor { get; set; }
+
+    public long? IdActualizadoPor { get; set; }
+
+    public long? IdEliminadoPor { get; set; }
+
+    public string? CreadoPor { get; set; }
+
+    public string? ActualizadoPor { get; set; }
+
+    public string? EliminadoPor { get; set; }
 
     public virtual ICollection<TbEventoDestino> TbEventoDestinos { get; set; } = new List<TbEventoDestino>();
 

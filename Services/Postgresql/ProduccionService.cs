@@ -2,6 +2,7 @@
 using backend_trazabilidad.Models.Postgresql;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 using System.Numerics;
 using System.Security.Claims;
@@ -70,7 +71,7 @@ namespace backend_trazabilidad.Services.Postgresql
             {
                 var usuario = ObtenerIdUsuario();
 
-                Console.WriteLine($"ID USUARIO => {usuario.IdUsuario}");
+                System.Diagnostics.Debug.WriteLine($"ID USUARIO => {usuario.IdUsuario}");
 
                 await using var transaccion = await _context.Database.BeginTransactionAsync();
                 // ================================================================================
@@ -87,7 +88,7 @@ namespace backend_trazabilidad.Services.Postgresql
                     IdTipoLugar = 1,
                     Ubicacion = "BOLIVIA",
                     Estado = true,
-                    Usucre = usuario.IdUsuario
+                    //Usucre = usuario.IdUsuario
                 };
                 _context.TbInstancia.Add(instancia);
                 await _context.SaveChangesAsync();
@@ -137,12 +138,12 @@ namespace backend_trazabilidad.Services.Postgresql
                 // ================================================================================
                 // 1. BUSCAR PLANTA
                 // ================================================================================
-                Console.WriteLine("======================================");
-                Console.WriteLine($"PLANTA RECIBIDA: {dto.PlantaId}");
-                Console.WriteLine($"CERTIFICADO: {dto.NroCertificado}");
-                Console.WriteLine($"VOLUMEN: {dto.VolTotal}");
-                Console.WriteLine($"FECHA: {dto.FechaMuestra}");
-                Console.WriteLine("======================================");
+                System.Diagnostics.Debug.WriteLine("======================================");
+                System.Diagnostics.Debug.WriteLine($"PLANTA RECIBIDA: {dto.PlantaId}");
+                System.Diagnostics.Debug.WriteLine($"CERTIFICADO: {dto.NroCertificado}");
+                System.Diagnostics.Debug.WriteLine($"VOLUMEN: {dto.VolTotal}");
+                System.Diagnostics.Debug.WriteLine($"FECHA: {dto.FechaMuestra}");
+                System.Diagnostics.Debug.WriteLine("======================================");
                 var loteQwery = await _context.TbLoteGlps.FirstOrDefaultAsync(x => x.IdPlantaOrigen == dto.PlantaId);
                 var plantaQwery = await _context.TbPlanta.FirstOrDefaultAsync(x => x.IdPlanta == dto.PlantaId);
                 if (plantaQwery == null)
@@ -227,37 +228,32 @@ namespace backend_trazabilidad.Services.Postgresql
             }
         }
 
-        public async Task<CrearCisternasDto> CrearCisternasAsync(
-     ProdCisternaDto pcd)
+        public async Task<CrearCisternasDto> CrearCisternasAsync(ProdCisternaDto pcd)
         {
-            Console.WriteLine("=====================================");
-            Console.WriteLine("ENTRANDO A CrearCisternasAsync");
-            Console.WriteLine($"ID PLANTA RECIBIDO: {pcd.IdPlanta}");
-            Console.WriteLine($"CANTIDAD CISTERNAS: {pcd.Cisterna.Count}");
-            Console.WriteLine("=====================================");
+            System.Diagnostics.Debug.WriteLine("=====================================");
+            System.Diagnostics.Debug.WriteLine("ENTRANDO A CrearCisternasAsync");
+            System.Diagnostics.Debug.WriteLine($"ID PLANTA RECIBIDO: {pcd.IdPlanta}");
+            System.Diagnostics.Debug.WriteLine($"CANTIDAD CISTERNAS: {pcd.Cisterna.Count}");
+            System.Diagnostics.Debug.WriteLine($"TOTAL CISTERNAS: {pcd.Cisterna}");
+            System.Diagnostics.Debug.WriteLine("=====================================");
+            var usuarioAutenticado = ObtenerIdUsuario();
+            await using var transaccion = await _context.Database.BeginTransactionAsync();
 
             // =============================================
             // BUSCAR PLANTA
             // =============================================
 
-            var planta = await _context.TbPlanta
-                .FirstOrDefaultAsync(
-                    x => x.IdPlanta == pcd.IdPlanta
-                );
+            var planta = await _context.TbPlanta.FirstOrDefaultAsync(x => x.IdPlanta == pcd.IdPlanta);
 
             if (planta == null)
             {
-                Console.WriteLine(
-                    $"NO EXISTE LA PLANTA {pcd.IdPlanta}"
-                );
-
-                throw new Exception(
-                    $"No existe la planta {pcd.IdPlanta}"
-                );
+                System.Diagnostics.Debug.WriteLine($"NO EXISTE LA PLANTA {pcd.IdPlanta}");
+                throw new Exception($"No existe la planta {pcd.IdPlanta}");
             }
 
-            System.Diagnostics.Debug.WriteLine($"PLANTA ENCONTRADA: {planta.IdPlanta}");
-            System.Diagnostics.Debug.WriteLine($"ID INSTANCIA: {planta.IdInstancia}");
+            System.Diagnostics.Debug.WriteLine($"PLANTA ENCONTRADA: {planta.IdPlanta}");//✅
+            System.Diagnostics.Debug.WriteLine($"ID INSTANCIA: {planta.IdInstancia}");//✅
+            System.Diagnostics.Debug.WriteLine($"CISTERNAS: {pcd.Cisterna}");
 
             // =============================================
             // MOSTRAR CISTERNAS
@@ -265,33 +261,43 @@ namespace backend_trazabilidad.Services.Postgresql
 
             foreach (var item in pcd.Cisterna)
             {
-                if (item == null)
-                    continue;
+                if (item == null) continue;
 
-                var placa =
-                    item["placa"]?.ToString();
+                var id_cisterna = item.Id;
 
-                var conductor =
-                    item["conductor"]?.ToString();
+                // OBTENGO LOS DATOS DEL CONDUCTOR, LA PLACA, VOLUMEN TM
+                // =============================================
+                var Cist = await _context.TbCisternaDetalles.FirstOrDefaultAsync(x => x.Id == item.Id);
+                var SaveCist = new TbCisterna
+                {
+                    IdInstancia = planta.IdInstancia,
+                    IdCisternaDetalle = item.Id,
+                    Estado = true,
+                    CreadoEn = DateTime.Now,
+                    IdCreadoPor = usuarioAutenticado.IdUsuario,
+                    CreadoPor = usuarioAutenticado.Email.Split("/")[0].ToUpper()
+                };
+                _context.TbCisternas.Add(SaveCist);
+                await _context.SaveChangesAsync();
 
-                var presinto =
-                    item["presinto"]?.ToString();
-
-                var volumen =
-                    item["volumen"]?.ToString();
-
-                Console.WriteLine("---------------------------------");
-                Console.WriteLine($"PLACA: {placa}");
-                Console.WriteLine($"CONDUCTOR: {conductor}");
-                Console.WriteLine($"PRECINTO: {presinto}");
-                Console.WriteLine($"VOLUMEN: {volumen}");
-                Console.WriteLine("---------------------------------");
+                System.Diagnostics.Debug.WriteLine("---------------------------------");
+                System.Diagnostics.Debug.WriteLine($"PLACA: {id_cisterna}");
+                System.Diagnostics.Debug.WriteLine($"PLACA: {Cist.Conductor}");
+                System.Diagnostics.Debug.WriteLine($"PLACA: {Cist.Placa}");
+                System.Diagnostics.Debug.WriteLine($"PLACA: {Cist.VolBbls}");
+                System.Diagnostics.Debug.WriteLine($"PLACA: {Cist.VolM3}");
+                System.Diagnostics.Debug.WriteLine("---------------------------------");
             }
+            await transaccion.CommitAsync();
 
-            Console.WriteLine("FIN CrearCisternasAsync");
-            Console.WriteLine("=====================================");
+            System.Diagnostics.Debug.WriteLine("FIN CrearCisternasAsync");
+            System.Diagnostics.Debug.WriteLine("=====================================");
 
-            return pcd;
+            return new CrearCisternasDto
+            {
+                IdInstancia = planta.IdInstancia,
+                IdCisternaDetalle = planta.IdPlanta
+            };
         }
 
         private static DateTime SinZonaHoraria(DateTime fecha)

@@ -3,9 +3,6 @@ using System.Collections.Generic;
 
 namespace backend_trazabilidad.Models.Postgresql;
 
-/// <summary>
-/// Catálogo de tipos de nodo: planta, transporte, almacenamiento, engarrafado y distribución.
-/// </summary>
 public partial class TbTipoLugar
 {
     public short IdTipoLugar { get; set; }

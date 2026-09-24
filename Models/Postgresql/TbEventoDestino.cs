@@ -3,9 +3,6 @@ using System.Collections.Generic;
 
 namespace backend_trazabilidad.Models.Postgresql;
 
-/// <summary>
-/// Detalle de destinos. Permite múltiples destinos en un evento, por ejemplo un tanque hacia 3 engarrafadoras.
-/// </summary>
 public partial class TbEventoDestino
 {
     public long IdEventoDestino { get; set; }
@@ -19,6 +16,28 @@ public partial class TbEventoDestino
     public decimal Volumen { get; set; }
 
     public decimal? Porcentaje { get; set; }
+
+    public string? Matadata { get; set; }
+
+    public bool Activo { get; set; }
+
+    public DateTime CreadoEn { get; set; }
+
+    public DateTime? ActualizadoEn { get; set; }
+
+    public DateTime? EliminadoEn { get; set; }
+
+    public long? IdCreadoPor { get; set; }
+
+    public long? IdActualizadoPor { get; set; }
+
+    public long? IdEliminadoPor { get; set; }
+
+    public string? CreadoPor { get; set; }
+
+    public string? ActualizadoPor { get; set; }
+
+    public string? EliminadoPor { get; set; }
 
     public virtual TbEvento IdEventoNavigation { get; set; } = null!;
 

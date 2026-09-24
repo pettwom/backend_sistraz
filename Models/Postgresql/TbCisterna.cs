@@ -12,13 +12,7 @@ public partial class TbCisterna
 
     public long IdInstancia { get; set; }
 
-    public string Placa { get; set; } = null!;
-
-    public string? Conductor { get; set; }
-
-    public string? NroPrecinto { get; set; }
-
-    public decimal? VolTotal { get; set; }
+    public long IdCisternaDetalle { get; set; }
 
     public bool Estado { get; set; }
 
@@ -49,6 +43,4 @@ public partial class TbCisterna
     public string? ActualizadoPor { get; set; }
 
     public string? EliminadoPor { get; set; }
-
-    public virtual TbInstancium IdInstanciaNavigation { get; set; } = null!;
 }
