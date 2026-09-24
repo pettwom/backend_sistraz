@@ -4,6 +4,7 @@ using DocumentFormat.OpenXml.Office.Word;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Diagnostics;
 using System.Security.Claims;
 using System.Text.Json;
 
@@ -21,6 +22,37 @@ namespace backend_trazabilidad.Services.Postgresql
             _httpContextAccessor = httpContextAccessor;
         }
 
+        public async Task<long> CrearEvento(EventoRequestDto evr)
+        {
+            ArgumentNullException.ThrowIfNull(evr);
+            _logger.LogInformation("======  Datos recibidos en AlmacenarEvento: {Evento}", JsonSerializer.Serialize(evr, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            }));
+
+            var usuarioAutenticado = ObtenerIdUsuario();
+            try
+            {
+                var evento = new TbEvento
+                {
+                    TipoEvento = evr.TipoEvento,
+                    FechaEvento = DateTime.Now,
+                    Descripcion = evr.Descripcion,
+                    Estado = "ACTIVO",
+                    Activo = true,
+                    CreadoEn = DateTime.Now,
+                    IdCreadoPor = usuarioAutenticado.IdUsuario,
+                    CreadoPor = usuarioAutenticado.Email.Split("@")[0].ToUpper()
+                };
+                _context.TbEventos.Add(evento);
+                await _context.SaveChangesAsync();
+                return evento.id;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"No se creo el evento");
+            }
+        }
         public async Task<EventoRequestDto> AlmacenarEvento(EventoRequestDto evr)
         {
 
@@ -35,7 +67,7 @@ namespace backend_trazabilidad.Services.Postgresql
 
 
             var usuarioAutenticado = ObtenerIdUsuario();
-            TbEvento? evento = null;
+
             try
             {
                 //==========================================================================
@@ -51,23 +83,6 @@ namespace backend_trazabilidad.Services.Postgresql
                 //ALMACENA EL EVENTO 
                 //==========================================================================
 
-                if (evr.CantEvento == 1)
-                {
-                    evento = new TbEvento
-                    {
-                        TipoEvento = evr.TipoEvento,
-                        FechaEvento = DateTime.Now,
-                        Descripcion = evr.Descripcion,
-                        Estado = "ACTIVO",
-                        Activo = true,
-                        CreadoEn = DateTime.Now,
-                        IdCreadoPor = usuarioAutenticado.IdUsuario,
-                        CreadoPor = usuarioAutenticado.Email.Split("@")[0].ToUpper()
-                    };
-                    _context.TbEventos.Add(evento);
-                    await _context.SaveChangesAsync();
-                }
-
                 if (evr.TipoAccion == "ORIGEN")
                 {
                     decimal? dataRes = null;
@@ -78,7 +93,7 @@ namespace backend_trazabilidad.Services.Postgresql
                             if (data is null) throw new Exception($"No se encontraron datos de Cisternas con el id: {data}");
                             dataRes = data.VolBbls.Value;
                             var events = await _context.TbEventoOrigens.FirstOrDefaultAsync(x => x.IdInstancia == evr.IdInstancia && x.IdLote == lote.IdLote);
-                            if (events is null) throw new Exception($"No se registro ningun evento"); 
+                            if (events is null) throw new Exception($"No se registro ningun evento");
                             break;
                     }
                     var evento_origen = new TbEventoOrigen

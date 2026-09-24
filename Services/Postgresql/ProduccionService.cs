@@ -1,5 +1,6 @@
 ﻿using backend_trazabilidad.DTOs.Postgresql;
 using backend_trazabilidad.Models.Postgresql;
+using DocumentFormat.OpenXml.Office2010.ExcelAc;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -233,12 +234,6 @@ namespace backend_trazabilidad.Services.Postgresql
         public async Task<CrearCisternasDto> CrearCisternasAsync(ProdCisternaDto pcd)
         {
             var y = 0;
-            System.Diagnostics.Debug.WriteLine("=====================================");
-            System.Diagnostics.Debug.WriteLine("ENTRANDO A CrearCisternasAsync");
-            System.Diagnostics.Debug.WriteLine($"ID PLANTA RECIBIDO: {pcd.IdPlanta}");
-            System.Diagnostics.Debug.WriteLine($"CANTIDAD CISTERNAS: {pcd.Cisterna.Count}");
-            System.Diagnostics.Debug.WriteLine($"TOTAL CISTERNAS: {pcd.Cisterna}");
-            System.Diagnostics.Debug.WriteLine("=====================================");
             var usuarioAutenticado = ObtenerIdUsuario();
             TbInstancium? Instancia = null;
             await using var transaccion = await _context.Database.BeginTransactionAsync();
@@ -258,7 +253,13 @@ namespace backend_trazabilidad.Services.Postgresql
             System.Diagnostics.Debug.WriteLine($"PLANTA ENCONTRADA: {planta.IdPlanta}");//✅
             System.Diagnostics.Debug.WriteLine($"ID INSTANCIA: {planta.IdInstancia}");//✅
             System.Diagnostics.Debug.WriteLine($"CISTERNAS: {pcd.Cisterna}");
+            var datosEvento = new EventoRequestDto
+            {
+                TipoEvento = "DESPACHO",
+                Descripcion = "prueba de descripcion",
+            };
 
+            var idEvento = await _IEventoService.CrearEvento(datosEvento);
             // =============================================
             // MOSTRAR CISTERNAS
             // =============================================
@@ -286,13 +287,6 @@ namespace backend_trazabilidad.Services.Postgresql
                 _context.TbInstancia.Add(Instancia);
 
                 await _context.SaveChangesAsync();
-                System.Diagnostics.Debug.WriteLine("---------------------------------");
-                System.Diagnostics.Debug.WriteLine($"id_cisterna_detalle: {Instancia.IdInstancia}");
-                System.Diagnostics.Debug.WriteLine($"id_cisterna_detalle: {item.Id}");
-                System.Diagnostics.Debug.WriteLine($"id_cisterna_detalle: {DateTime.Now}");
-                System.Diagnostics.Debug.WriteLine($"id_cisterna_detalle: {usuarioAutenticado.IdUsuario}");
-                System.Diagnostics.Debug.WriteLine($"id_cisterna_detalle: {usuarioAutenticado.Email.Split("@")[0].ToUpper()}");
-                System.Diagnostics.Debug.WriteLine("---------------------------------");
 
                 var SaveCist = new TbCisterna
                 {
@@ -316,17 +310,11 @@ namespace backend_trazabilidad.Services.Postgresql
                     Descripcion = "prueba de descripcion",
                     Data = Cist.Id,
                     EtapaFlujo = "CISTERNA",
-                    CantEvento=y
+                    CantEvento=y,
+                    IdEvento= idEvento
                 };
                 await _IEventoService.AlmacenarEvento(eventosDto);
 
-                System.Diagnostics.Debug.WriteLine("---------------------------------");
-                System.Diagnostics.Debug.WriteLine($"PLACA: {id_cisterna}");
-                System.Diagnostics.Debug.WriteLine($"PLACA: {Cist.Conductor}");
-                System.Diagnostics.Debug.WriteLine($"PLACA: {Cist.Placa}");
-                System.Diagnostics.Debug.WriteLine($"PLACA: {Cist.VolBbls}");
-                System.Diagnostics.Debug.WriteLine($"PLACA: {Cist.VolM3}");
-                System.Diagnostics.Debug.WriteLine("---------------------------------");
             }
             await transaccion.CommitAsync();
             
