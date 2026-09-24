@@ -268,11 +268,27 @@ namespace backend_trazabilidad.Services.Postgresql
                 // OBTENGO LOS DATOS DEL CONDUCTOR, LA PLACA, VOLUMEN TM
                 // =============================================
                 var Cist = await _context.TbCisternaDetalles.FirstOrDefaultAsync(x => x.Id == item.Id);
+
+                var Instancia = new TbInstancium
+                {
+                    IdTipoLugar = 2,
+                    Codigo = Cist.Placa,
+                    Nombre = "Cisterna " + Cist.Placa,
+                    Estado = true,
+                    Activo= true,
+                    CreadoEn = DateTime.Now,
+                    IdCreadoPor = usuarioAutenticado.IdUsuario,
+                    CreadoPor = usuarioAutenticado.Email.Split("/")[0].ToUpper()
+                };
+                _context.TbInstancia.Add(Instancia);
+                await _context.SaveChangesAsync();
+
                 var SaveCist = new TbCisterna
                 {
-                    IdInstancia = planta.IdInstancia,
+                    IdInstancia = Instancia.IdInstancia,
                     IdCisternaDetalle = item.Id,
                     Estado = true,
+                    Activo= true,
                     CreadoEn = DateTime.Now,
                     IdCreadoPor = usuarioAutenticado.IdUsuario,
                     CreadoPor = usuarioAutenticado.Email.Split("/")[0].ToUpper()
