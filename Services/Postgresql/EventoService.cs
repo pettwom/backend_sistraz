@@ -1,5 +1,6 @@
 ﻿using backend_trazabilidad.DTOs.Postgresql;
 using backend_trazabilidad.Models.Postgresql;
+using DocumentFormat.OpenXml.Office.Word;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -34,100 +35,97 @@ namespace backend_trazabilidad.Services.Postgresql
 
 
             var usuarioAutenticado = ObtenerIdUsuario();
-            await using var transaccion = await _context.Database.BeginTransactionAsync();
+            TbEvento? evento = null;
             try
             {
                 //==========================================================================
                 //RECUPERAR DATOS PARA EL REGISTRO EN EL EVENTO 
                 //==========================================================================
-                var planta = await _context.TbPlanta.FirstOrDefaultAsync(x => x.IdInstancia == evr.IdInstancia);//obtenemos id_planta
-                if (planta is null) throw new Exception($"No existe la Instancia con id_instancia = {evr.IdInstancia}");
+                //var planta = await _context.TbPlanta.FirstOrDefaultAsync(x => x.IdInstancia == evr.IdInstancia);//obtenemos id_planta
+                //if (planta is null) throw new Exception($"No existe la Instancia con id_instancia = {evr.IdInstancia}");
 
-                var lote = await _context.TbLoteGlps.FirstOrDefaultAsync(x => x.IdPlantaOrigen == planta.Id);//obtenemos id_lote
+                var lote = await _context.TbLoteGlps.FirstOrDefaultAsync(x => x.IdPlantaOrigen == evr.IdPlanta);//obtenemos id_lote
                 if (lote is null) throw new Exception($"No Existe el lote con la instancia {evr.IdInstancia}");
 
                 //==========================================================================
                 //ALMACENA EL EVENTO 
                 //==========================================================================
-                var evento = new TbEvento
+
+                if (evr.CantEvento == 1)
                 {
-                    TipoEvento = evr.TipoEvento,
-                    FechaEvento = DateTime.Now,
-                    Descripcion = evr.Descripcion,
-                    Estado = "ACTIVO",
-                    Activo = true,
-                    CreadoEn = DateTime.Now,
-                    IdCreadoPor = usuarioAutenticado.IdUsuario,
-                    CreadoPor = usuarioAutenticado.Email.Split("@")[0].ToUpper()
-                };
-                _context.TbEventos.Add(evento);
-                await _context.SaveChangesAsync();
+                    evento = new TbEvento
+                    {
+                        TipoEvento = evr.TipoEvento,
+                        FechaEvento = DateTime.Now,
+                        Descripcion = evr.Descripcion,
+                        Estado = "ACTIVO",
+                        Activo = true,
+                        CreadoEn = DateTime.Now,
+                        IdCreadoPor = usuarioAutenticado.IdUsuario,
+                        CreadoPor = usuarioAutenticado.Email.Split("@")[0].ToUpper()
+                    };
+                    _context.TbEventos.Add(evento);
+                    await _context.SaveChangesAsync();
+                }
 
                 if (evr.TipoAccion == "ORIGEN")
                 {
-                    foreach (var item in evr.Data)
+                    decimal? dataRes = null;
+                    switch (evr.EtapaFlujo)
                     {
-                        decimal? dataRes = null;
-                        switch (evr.EtapaFlujo)
-                        {
-                            case "CISTERNA":
-                                var data = await _context.TbCisternaDetalles.FirstOrDefaultAsync(x => x.Id == item.Id);
-                                if (data is null) throw new Exception($"No se encontraron datos de Cisternas con el id: {item.Id}");
-
-                                dataRes = data.VolBbls;
-                                break;
-                        }
-                        var evento_origen = new TbEventoOrigen
-                        {
-                            IdEvento = evento.IdEvento,
-                            IdInstancia = evr.IdInstancia,
-                            IdLote = lote.Id,
-                            Volumen = dataRes ?? 0,
-                            Activo = true,
-                            CreadoEn = DateTime.Now,
-                            IdCreadoPor = usuarioAutenticado.IdUsuario,
-                            CreadoPor = usuarioAutenticado.Email.Split("@")[0].ToUpper()
-                        };
-                        _context.TbEventoOrigens.Add(evento_origen);
-                        await _context.SaveChangesAsync();
+                        case "CISTERNA":
+                            var data = await _context.TbCisternaDetalles.FirstOrDefaultAsync(x => x.Id == evr.Data);
+                            if (data is null) throw new Exception($"No se encontraron datos de Cisternas con el id: {data}");
+                            dataRes = data.VolBbls.Value;
+                            var events = await _context.TbEventoOrigens.FirstOrDefaultAsync(x => x.IdInstancia == evr.IdInstancia && x.IdLote == lote.IdLote);
+                            if (events is null) throw new Exception($"No se registro ningun evento"); 
+                            break;
                     }
+                    var evento_origen = new TbEventoOrigen
+                    {
+                        IdEvento = evento.IdEvento,
+                        IdInstancia = evr.IdInstancia,
+                        IdLote = lote.IdLote,
+                        Volumen = (decimal)dataRes,
+                        Activo = true,
+                        CreadoEn = DateTime.Now,
+                        IdCreadoPor = usuarioAutenticado.IdUsuario,
+                        CreadoPor = usuarioAutenticado.Email.Split("@")[0].ToUpper()
+                    };
+                    _context.TbEventoOrigens.Add(evento_origen);
+                    await _context.SaveChangesAsync();
+
                 }
                 if (evr.TipoAccion == "DESTINO")
                 {
-                    foreach (var item in evr.Data)
+
+                    decimal? dataRes = null;
+                    switch (evr.EtapaFlujo)
                     {
-                        decimal? dataRes = null;
-                        switch (evr.EtapaFlujo)
-                        {
-                            case "CISTERNA":
-                                var data = await _context.TbCisternaDetalles.FirstOrDefaultAsync(x => x.Id == item.Id);
-                                System.Diagnostics.Debug.WriteLine($"EL DATO DE LA CISTERNA ES {data}");
-                                if (data is null) throw new Exception($"No se encontraron datos de Cisternas con el id: {item.Id}");
+                        case "CISTERNA":
+                            var data = await _context.TbCisternaDetalles.FirstOrDefaultAsync(x => x.Id == evr.Data);
+                            System.Diagnostics.Debug.WriteLine($"EL DATO DE LA CISTERNA ES {data}");
+                            if (data is null) throw new Exception($"No se encontraron datos de Cisternas con el id: {evr.Data}");
 
-                                dataRes = data.VolBbls;
+                            dataRes = data.VolBbls.Value;
 
-                                break;
-                        }
-                        System.Diagnostics.Debug.WriteLine($"=====================================================================");
-                        System.Diagnostics.Debug.WriteLine($"LA DATA ES {evr.Data}");
-                        System.Diagnostics.Debug.WriteLine($"LA DATA ES {dataRes}");
-                        System.Diagnostics.Debug.WriteLine($"=====================================================================");
-
-                        var evento_destino = new TbEventoDestino
-                        {
-                            IdEvento = evento.IdEvento,
-                            IdInstancia = evr.IdInstancia,
-                            IdLote = lote.Id,
-                            Volumen = dataRes ?? 0,
-                            Activo = true,
-                            CreadoEn = DateTime.Now,
-                            IdCreadoPor = usuarioAutenticado.IdUsuario,
-                            CreadoPor = usuarioAutenticado.Email.Split("@")[0].ToUpper()
-                        };
-                        _context.TbEventoDestinos.Add(evento_destino);
-                        await _context.SaveChangesAsync();
+                            break;
                     }
+                    var evento_destino = new TbEventoDestino
+                    {
+                        IdEvento = evento.IdEvento,
+                        IdInstancia = evr.IdInstancia,
+                        IdLote = lote.IdLote,
+                        Volumen = (decimal)dataRes,
+                        Activo = true,
+                        CreadoEn = DateTime.Now,
+                        IdCreadoPor = usuarioAutenticado.IdUsuario,
+                        CreadoPor = usuarioAutenticado.Email.Split("@")[0].ToUpper()
+                    };
+                    _context.TbEventoDestinos.Add(evento_destino);
+
                 }
+                await _context.SaveChangesAsync();
             }
             catch (Exception ex)
             {

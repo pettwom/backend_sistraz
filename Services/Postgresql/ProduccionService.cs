@@ -232,6 +232,7 @@ namespace backend_trazabilidad.Services.Postgresql
 
         public async Task<CrearCisternasDto> CrearCisternasAsync(ProdCisternaDto pcd)
         {
+            var y = 0;
             System.Diagnostics.Debug.WriteLine("=====================================");
             System.Diagnostics.Debug.WriteLine("ENTRANDO A CrearCisternasAsync");
             System.Diagnostics.Debug.WriteLine($"ID PLANTA RECIBIDO: {pcd.IdPlanta}");
@@ -261,7 +262,6 @@ namespace backend_trazabilidad.Services.Postgresql
             // =============================================
             // MOSTRAR CISTERNAS
             // =============================================
-
             foreach (var item in pcd.Cisterna)
             {
                 if (item == null) continue;
@@ -284,6 +284,7 @@ namespace backend_trazabilidad.Services.Postgresql
                     CreadoPor = usuarioAutenticado.Email.Split("@")[0].ToUpper()
                 };
                 _context.TbInstancia.Add(Instancia);
+
                 await _context.SaveChangesAsync();
                 System.Diagnostics.Debug.WriteLine("---------------------------------");
                 System.Diagnostics.Debug.WriteLine($"id_cisterna_detalle: {Instancia.IdInstancia}");
@@ -305,6 +306,19 @@ namespace backend_trazabilidad.Services.Postgresql
                 };
                 _context.TbCisternas.Add(SaveCist);
                 await _context.SaveChangesAsync();
+                y += 1;
+                var eventosDto = new EventoRequestDto
+                {
+                    IdPlanta = pcd.IdPlanta,
+                    IdInstancia = Instancia.IdInstancia,
+                    TipoAccion = "ORIGEN",
+                    TipoEvento = "DESPACHO",
+                    Descripcion = "prueba de descripcion",
+                    Data = Cist.Id,
+                    EtapaFlujo = "CISTERNA",
+                    CantEvento=y
+                };
+                await _IEventoService.AlmacenarEvento(eventosDto);
 
                 System.Diagnostics.Debug.WriteLine("---------------------------------");
                 System.Diagnostics.Debug.WriteLine($"PLACA: {id_cisterna}");
@@ -315,16 +329,7 @@ namespace backend_trazabilidad.Services.Postgresql
                 System.Diagnostics.Debug.WriteLine("---------------------------------");
             }
             await transaccion.CommitAsync();
-            var eventosDto = new EventoRequestDto
-            {
-                IdInstancia = Instancia.IdInstancia,
-                TipoAccion = "DESTINO",
-                TipoEvento = "DESPACHO",
-                Descripcion = "",
-                Data = pcd.Cisterna.Select(x => new DataDto{Id = x.Id}).ToList(),
-                EtapaFlujo = "CISTERNA"
-            };
-            await _IEventoService.AlmacenarEvento(eventosDto);
+            
 
             System.Diagnostics.Debug.WriteLine("FIN CrearCisternasAsync");
             System.Diagnostics.Debug.WriteLine("=====================================");
