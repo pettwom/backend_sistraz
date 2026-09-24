@@ -128,7 +128,7 @@ namespace backend_trazabilidad.Services.Postgresql
                     }
                     var evento_destino = new TbEventoDestino
                     {
-                        IdEvento = evento.IdEvento,
+                        IdEvento = evr.IdEvento,
                         IdInstancia = evr.IdInstancia,
                         IdLote = lote.IdLote,
                         Volumen = (decimal)dataRes,
