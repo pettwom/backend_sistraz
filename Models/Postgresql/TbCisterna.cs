@@ -16,10 +16,6 @@ public partial class TbCisterna
 
     public bool Estado { get; set; }
 
-    public long Usucre { get; set; }
-
-    public DateTime Feccre { get; set; }
-
     public string? Observacion { get; set; }
 
     public string? Matadata { get; set; }

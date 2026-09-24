@@ -653,10 +653,6 @@ public partial class PostgresDbContext : DbContext
             entity.Property(e => e.Estado)
                 .HasDefaultValue(true)
                 .HasColumnName("estado");
-            entity.Property(e => e.Feccre)
-                .HasDefaultValueSql("now()")
-                .HasColumnType("timestamp(0) without time zone")
-                .HasColumnName("feccre");
             entity.Property(e => e.IdActualizadoPor).HasColumnName("id_actualizado_por");
             entity.Property(e => e.IdCisternaDetalle).HasColumnName("id_cisterna_detalle");
             entity.Property(e => e.IdCreadoPor).HasColumnName("id_creado_por");
@@ -666,7 +662,6 @@ public partial class PostgresDbContext : DbContext
                 .HasColumnType("jsonb")
                 .HasColumnName("matadata");
             entity.Property(e => e.Observacion).HasColumnName("observacion");
-            entity.Property(e => e.Usucre).HasColumnName("usucre");
         });
 
         modelBuilder.Entity<TbCisternaDetalle>(entity =>
