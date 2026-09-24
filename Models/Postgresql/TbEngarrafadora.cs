@@ -16,10 +16,6 @@ public partial class TbEngarrafadora
 
     public bool Estado { get; set; }
 
-    public long Usucre { get; set; }
-
-    public DateTime Feccre { get; set; }
-
     public int? VolDisponible { get; set; }
 
     public int? VolEnvasado { get; set; }

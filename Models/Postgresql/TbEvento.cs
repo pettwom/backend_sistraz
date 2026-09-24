@@ -17,10 +17,6 @@ public partial class TbEvento
 
     public string? Observacion { get; set; }
 
-    public long Usucre { get; set; }
-
-    public DateTime Feccre { get; set; }
-
     public string? Matadata { get; set; }
 
     public bool Activo { get; set; }

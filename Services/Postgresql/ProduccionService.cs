@@ -15,11 +15,13 @@ namespace backend_trazabilidad.Services.Postgresql
         private readonly PostgresDbContext _context;
         private readonly ILogger<ProduccionService> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        public ProduccionService(PostgresDbContext context, ILogger<ProduccionService> logger, IHttpContextAccessor httpContextAccessor)
+        private readonly IEventoService _IEventoService;
+        public ProduccionService(PostgresDbContext context, ILogger<ProduccionService> logger, IHttpContextAccessor httpContextAccessor, IEventoService IEventoService)
         {
             _context = context;
             _logger = logger;
             _httpContextAccessor = httpContextAccessor;
+            _IEventoService= IEventoService
         }
 
         public async Task<List<ProduccionDto>> ObtenerListadoAsync()
@@ -237,6 +239,7 @@ namespace backend_trazabilidad.Services.Postgresql
             System.Diagnostics.Debug.WriteLine($"TOTAL CISTERNAS: {pcd.Cisterna}");
             System.Diagnostics.Debug.WriteLine("=====================================");
             var usuarioAutenticado = ObtenerIdUsuario();
+            await using var Instancia = null;
             await using var transaccion = await _context.Database.BeginTransactionAsync();
 
             // =============================================
@@ -269,7 +272,7 @@ namespace backend_trazabilidad.Services.Postgresql
                 // =============================================
                 var Cist = await _context.TbCisternaDetalles.FirstOrDefaultAsync(x => x.Id == item.Id);
 
-                var Instancia = new TbInstancium
+                Instancia = new TbInstancium
                 {
                     IdTipoLugar = 2,
                     Codigo = Cist.Placa,
@@ -289,6 +292,7 @@ namespace backend_trazabilidad.Services.Postgresql
                 System.Diagnostics.Debug.WriteLine($"id_cisterna_detalle: {usuarioAutenticado.IdUsuario}");
                 System.Diagnostics.Debug.WriteLine($"id_cisterna_detalle: {usuarioAutenticado.Email.Split("@")[0].ToUpper()}");
                 System.Diagnostics.Debug.WriteLine("---------------------------------");
+
                 var SaveCist = new TbCisterna
                 {
                     IdInstancia = Instancia.IdInstancia,
@@ -301,7 +305,7 @@ namespace backend_trazabilidad.Services.Postgresql
                 };
                 _context.TbCisternas.Add(SaveCist);
                 await _context.SaveChangesAsync();
-
+  
                 System.Diagnostics.Debug.WriteLine("---------------------------------");
                 System.Diagnostics.Debug.WriteLine($"PLACA: {id_cisterna}");
                 System.Diagnostics.Debug.WriteLine($"PLACA: {Cist.Conductor}");
@@ -311,6 +315,16 @@ namespace backend_trazabilidad.Services.Postgresql
                 System.Diagnostics.Debug.WriteLine("---------------------------------");
             }
             await transaccion.CommitAsync();
+            var eventosDto = new EventoRequestDto
+            {
+                IdInstancia = Instancia.IdInstancia,
+                TipoAccion = "DESTINO",
+                TipoEvento = "DESPACHO",
+                Descripcion = "",
+                Data = pcd.Cisterna,
+                EtapaFlujo = "TRANSPORTE"
+            };
+            await _IEventoService.AlmacenarEvento(EventoRequestDto);
 
             System.Diagnostics.Debug.WriteLine("FIN CrearCisternasAsync");
             System.Diagnostics.Debug.WriteLine("=====================================");
