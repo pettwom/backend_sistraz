@@ -46,7 +46,7 @@ namespace backend_trazabilidad.Services.Postgresql
                 };
                 _context.TbEventos.Add(evento);
                 await _context.SaveChangesAsync();
-                return evento.id;
+                return evento.IdEvento;
             }
             catch (Exception ex)
             {
@@ -98,7 +98,7 @@ namespace backend_trazabilidad.Services.Postgresql
                     }
                     var evento_origen = new TbEventoOrigen
                     {
-                        IdEvento = evento.IdEvento,
+                        IdEvento = evr.IdEvento,
                         IdInstancia = evr.IdInstancia,
                         IdLote = lote.IdLote,
                         Volumen = (decimal)dataRes,
