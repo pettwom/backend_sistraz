@@ -1,4 +1,5 @@
 ﻿using backend_trazabilidad.DTOs.Postgresql;
+using backend_trazabilidad.Models.Postgresql;
 using backend_trazabilidad.Services.Postgresql;
 using DocumentFormat.OpenXml.Office2010.ExcelAc;
 using Microsoft.AspNetCore.Authorization;
@@ -93,6 +94,19 @@ namespace backend_trazabilidad.Controllers
         public async Task<IActionResult> CrearCisterna([FromBody] ProdCisternaDto pcd) 
         {
             var resultado = await _produccionService.CrearCisternasAsync(pcd);
+            return Ok(resultado);
+        }
+        [Authorize]
+        [HttpPost("AddOperador")]
+        public async Task<IActionResult> AddOperador([FromBody] CrearOperadorDto coi) 
+        {
+            var resultado = await _produccionService.AdicionarOperadorAsync(coi);
+            return Ok(resultado);        
+        }
+        [Authorize]
+        [HttpGet("getOperador")]
+        public async Task<IActionResult> getOperador() {
+            var resultado = _produccionService.ObtenerOperadorAsync();
             return Ok(resultado);
         }
     }

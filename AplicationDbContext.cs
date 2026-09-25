@@ -43,7 +43,7 @@ namespace backend_trazabilidad
                 entity.Property(e => e.Abreviacion3).HasColumnName("ABREVIACION3").HasMaxLength(10);
                 entity.Property(e => e.FechaDesde).HasColumnName("FECHA_DESDE").HasColumnType("DATE");
                 entity.Property(e => e.FechaHasta).HasColumnName("FECHA_HASTA").HasColumnType("DATE");
-                entity.Property(e => e.AudEstado).HasColumnName("AUD_ESTADO").HasColumnType("NUMBER(1)").IsRequired();
+                entity.Property(e => e.AudEstado).HasColumnName("AUD_ESTADO").IsRequired();
                 entity.Property(e => e.AudUsuario).HasColumnName("AUD_USUARIO").HasMaxLength(30).IsRequired();
                 entity.Property(e => e.AudFecha).HasColumnName("AUD_FECHA").HasColumnType("TIMESTAMP(6)").IsRequired();
             });

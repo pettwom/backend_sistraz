@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 using System.Numerics;
 using System.Security.Claims;
+using System.Text.Json;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace backend_trazabilidad.Services.Postgresql
@@ -326,6 +327,90 @@ namespace backend_trazabilidad.Services.Postgresql
             };
         }
 
+        public async Task<CrearOperadorDto> AdicionarOperadorAsync(CrearOperadorDto coi)
+        {
+            ArgumentNullException.ThrowIfNull(coi);
+            _logger.LogInformation("======  Datos recibidos en AlmacenarEvento: {Evento}", JsonSerializer.Serialize(coi, new JsonSerializerOptions
+            {
+                WriteIndented = true
+            }));
+
+            try
+            {
+                var usuario = ObtenerIdUsuario();
+
+                await using var transaccion = await _context.Database.BeginTransactionAsync();
+                // ================================================================================
+                // 1. BUSCAR OPERADOR
+                // ================================================================================
+                var operador = await _context.TbInstancia.FirstOrDefaultAsync(x => x.Codigo == coi.CodOperador);
+                // ================================================================================
+                // 2. CREAR NUEVA INSTANCIA
+                // ================================================================================
+                var instancia = new TbInstancium
+                {
+                    Codigo = coi.CodOperador,
+                    Nombre = coi.Descripcion,
+                    IdTipoLugar = 1,
+                    Ubicacion = coi.PaisImpor,
+                    Estado = true,
+                    Activo = true, 
+                    CreadoEn=DateTime.Now,
+                    IdCreadoPor= usuario.IdUsuario,
+                    CreadoPor = usuario.Email.Split("@")[0].ToUpper()
+                };
+                _context.TbInstancia.Add(instancia);
+                await _context.SaveChangesAsync();
+                // ================================================================================
+                // 3. CREAR NUEVA PLANTA
+                // ================================================================================
+                var plant = new TbPlantum
+                {
+                    IdInstancia = instancia.IdInstancia,
+                    TipoOperacion = 2,
+                    Pais = coi.PaisImpor,
+                    Departamento = "",
+                    PuntoIngreso = coi.PuntoIngreso,
+                    Estado = true,
+                    Observacion = coi.ObsOperador,
+                    Activo = true,
+                    CreadoEn = DateTime.Now,
+                    IdCreadoPor = usuario.IdUsuario,
+                    CreadoPor = usuario.Email.Split("@")[0].ToUpper()
+                };
+                _context.TbPlanta.Add(plant);
+                await _context.SaveChangesAsync();
+
+                await transaccion.CommitAsync();
+                // ================================================================================
+                // 4. RETORNA RESULTADO
+                // ================================================================================
+                return coi;
+            }
+            catch (DbUpdateException ex)
+                when (ex.InnerException is PostgresException pgEx &&
+                      pgEx.SqlState == PostgresErrorCodes.UniqueViolation &&
+                      pgEx.ConstraintName == "uq_instancia_tipo_codigo")
+            {
+                throw new InvalidOperationException(
+                    $"La planta con código '{coi.CodOperador}' ya se encuentra registrada."
+                );
+            }
+        }
+
+        public async Task<List<TbPlantum>> ObtenerOperadorAsync() {
+            var resQuery = await (
+                    from tp in _context.TbPlanta
+                    where tp.TipoOperacion == 2
+                    select new TbPlantum
+                    {
+                        TipoOperacion = tp.TipoOperacion,
+                        Pais = tp.Pais
+                    }
+                ).AsNoTracking().ToListAsync();
+            System.Diagnostics.Debug.WriteLine($" ===============ObtenerOperador = > {resQuery}");
+            return resQuery;
+        }
         private static DateTime SinZonaHoraria(DateTime fecha)
         {
             return DateTime.SpecifyKind(

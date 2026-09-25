@@ -30,6 +30,5 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Models\PostgresqlPrueba\" />
-    <Folder Include="Models\Oracle\" />
   </ItemGroup>
 </Project>

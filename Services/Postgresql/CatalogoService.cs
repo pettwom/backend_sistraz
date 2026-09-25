@@ -1,6 +1,8 @@
-﻿using backend_trazabilidad.DTOs.Postgresql;
+﻿using backend_trazabilidad.DTOs.Oracle;
+using backend_trazabilidad.DTOs.Postgresql;
 using backend_trazabilidad.Models;
 using Microsoft.EntityFrameworkCore;
+using OracleScanffold.Models.Oracle;
 using System.Linq; // <- añadido
 
 namespace backend_trazabilidad.Services.Postgresql
@@ -34,12 +36,19 @@ namespace backend_trazabilidad.Services.Postgresql
                 .ToListAsync();
         }
 
-        //public async Task<List<SelectOptionDto>> ObtenerPaisAsync()
-        //{
-        //    return await
-        //        (
-        //        //from tp in _contextOracle.
-        //        );
-        //}
+        public async Task<List<PaisDto>> ObtenerPaisAsync()
+        {
+            return await _contextOracle.Paises.AsNoTracking()
+                .Where(p => p.AudEstado != 3)
+                .OrderBy(p=> p.Descripcion)
+                .Select(p=> new PaisDto 
+                { 
+                    IdPais = p.IdPais,
+                    Descripcion = p.Descripcion,
+                    Abreviacion2 = p.Abreviacion2,
+                    Abreviacion3 = p.Abreviacion3
+                })
+                .ToListAsync();
+        }
     }
 }
