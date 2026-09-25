@@ -49,7 +49,7 @@ namespace backend_trazabilidad.Services.Postgresql
                 on te.IdEvento equals tc.IdEvento into tcGroup
                 from tc in tcGroup.DefaultIfEmpty()
 
-                where tp.TipoOperacion == 1
+                //where tp.TipoOperacion == 1
 
                 orderby tlg.Codigo ascending
 
@@ -147,6 +147,7 @@ namespace backend_trazabilidad.Services.Postgresql
 
                 var loteQwery = await _context.TbLoteGlps.FirstOrDefaultAsync(x => x.IdPlantaOrigen == dto.PlantaId);
                 var plantaQwery = await _context.TbPlanta.FirstOrDefaultAsync(x => x.IdPlanta == dto.PlantaId);
+
                 if (plantaQwery == null)
                 {
                     throw new Exception(
@@ -180,11 +181,11 @@ namespace backend_trazabilidad.Services.Postgresql
                         TipoEvento = "RECEPCION",
                         FechaEvento = SinZonaHoraria(DateTime.Now),
                         Estado = "CONFIRMADO",
-                        Observacion = dto.Observacion
-                        //Activo = true,
-                        //CreadoEn = DateTime.Now,
-                        //IdCreadoPor = usuarioAutenticado.IdUsuario,
-                        //CreadoPor = usuarioAutenticado.Email
+                        Observacion = dto.Observacion,
+                        Activo = true,
+                        CreadoEn = SinZonaHoraria(DateTime.Now),
+                        IdCreadoPor = usuarioAutenticado.IdUsuario,
+                        CreadoPor = usuarioAutenticado.Email
                     };
                     _context.TbEventos.Add(eventoInit);
                     await _context.SaveChangesAsync();
@@ -197,12 +198,11 @@ namespace backend_trazabilidad.Services.Postgresql
                         IdInstancia = plantaQwery.IdInstancia,
                         IdLote = loteSave.IdLote,
                         Volumen = dto.VolTotal,
-                        Observacion = dto.Observacion
-                        //Estado = "ACTIVO",
-                        //Activo = true,
-                        //CreadoEn = DateTime.Now,
-                        //IdCreadoPor = usuarioAutenticado.IdUsuario,
-                        //CreadoPor = usuarioAutenticado.Email
+                        Observacion = dto.Observacion,
+                        Activo = true,
+                        CreadoEn = SinZonaHoraria(DateTime.Now),
+                        IdCreadoPor = usuarioAutenticado.IdUsuario,
+                        CreadoPor = usuarioAutenticado.Email
                     };
                     _context.TbEventoOrigens.Add(eventoOrigen);
                     await _context.SaveChangesAsync();
@@ -398,14 +398,19 @@ namespace backend_trazabilidad.Services.Postgresql
             }
         }
 
-        public async Task<List<TbPlantum>> ObtenerOperadorAsync() {
+        public async Task<List<CargaOperadorDto>> ObtenerOperadorAsync() {
             var resQuery = await (
                     from tp in _context.TbPlanta
+                    join ti in _context.TbInstancia
+                    on tp.IdInstancia equals ti.IdInstancia
                     where tp.TipoOperacion == 2
-                    select new TbPlantum
-                    {
-                        TipoOperacion = tp.TipoOperacion,
-                        Pais = tp.Pais
+                    select new CargaOperadorDto
+                    {   
+                        IdOperador = tp.IdPlanta,
+                        Codigo = ti.Codigo,
+                        Descripcion= ti.Descripcion,
+                        Pais = tp.Pais,
+                        PuntoIngreso = tp.PuntoIngreso
                     }
                 ).AsNoTracking().ToListAsync();
             System.Diagnostics.Debug.WriteLine($" ===============ObtenerOperador = > {resQuery}");

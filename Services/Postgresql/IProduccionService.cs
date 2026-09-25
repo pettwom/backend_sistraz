@@ -11,6 +11,6 @@ namespace backend_trazabilidad.Services.Postgresql
         Task<CrearPlantaDto> CrearPlantaAsync(CrearPlantaDto plt);
         Task<CrearCisternasDto> CrearCisternasAsync(ProdCisternaDto pcd);
         Task<CrearOperadorDto> AdicionarOperadorAsync(CrearOperadorDto coi);
-        Task<List<TbPlantum>> ObtenerOperadorAsync();
+        Task<List<CargaOperadorDto>> ObtenerOperadorAsync();
     }
 }

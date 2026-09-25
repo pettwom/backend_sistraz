@@ -106,7 +106,7 @@ namespace backend_trazabilidad.Controllers
         [Authorize]
         [HttpGet("getOperador")]
         public async Task<IActionResult> getOperador() {
-            var resultado = _produccionService.ObtenerOperadorAsync();
+            var resultado = await _produccionService.ObtenerOperadorAsync();
             return Ok(resultado);
         }
     }

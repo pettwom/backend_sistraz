@@ -24,6 +24,7 @@ namespace backend_trazabilidad.Services.Postgresql
                     from ti in _context.TbInstancia.AsNoTracking()
                     join tp in _context.TbPlanta.AsNoTracking()
                     on ti.IdInstancia equals tp.IdInstancia
+                    where tp.TipoOperacion == 1
                     orderby ti.Codigo
                     select new SelectOptionDto
                     {
