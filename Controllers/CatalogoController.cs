@@ -17,5 +17,10 @@ namespace backend_trazabilidad.Controllers
         {
             return Ok(await _service.ObtenerParametricasAsync());
         }
+        [HttpGet("pais")]
+        public async Task<IActionResult> GetPais()
+        {
+            return Ok(await _service.ObtenerPaisAsync());
+        }
     }
 }

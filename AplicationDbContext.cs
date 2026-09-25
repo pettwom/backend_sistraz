@@ -24,11 +24,30 @@ namespace backend_trazabilidad
         public DbSet<TsegMenuesPerfil> MenuesPerfil { get; set; }
 
         public DbSet<TsegMenue> Menues { get; set; }
-
+        public DbSet<TparPais> Paises { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // =====================================================
+            // ANH_PAR.TPAR_PAISES
+            // =====================================================
+            modelBuilder.Entity<TparPais>(entity =>
+            {
+                entity.ToTable("TPAR_PAISES", "ANH_PAR");
+                entity.HasKey(e => e.IdPais);
+                entity.Property(e => e.IdPais).HasColumnName("ID_PAIS").HasColumnType("NUMBER(15)");
+                entity.Property(e => e.Descripcion).HasColumnName("DESCRIPCION").HasMaxLength(200);
+                entity.Property(e => e.Abreviacion2).HasColumnName("ABREVIACION2").HasMaxLength(10);
+                entity.Property(e => e.Abreviacion3).HasColumnName("ABREVIACION3").HasMaxLength(10);
+                entity.Property(e => e.FechaDesde).HasColumnName("FECHA_DESDE").HasColumnType("DATE");
+                entity.Property(e => e.FechaHasta).HasColumnName("FECHA_HASTA").HasColumnType("DATE");
+                entity.Property(e => e.AudEstado).HasColumnName("AUD_ESTADO").HasColumnType("NUMBER(1)").IsRequired();
+                entity.Property(e => e.AudUsuario).HasColumnName("AUD_USUARIO").HasMaxLength(30).IsRequired();
+                entity.Property(e => e.AudFecha).HasColumnName("AUD_FECHA").HasColumnType("TIMESTAMP(6)").IsRequired();
+            });
+
 
 
             // =====================================================

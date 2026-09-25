@@ -37,10 +37,12 @@ namespace backend_trazabilidad.Services.Postgresql
                 on tp.IdInstancia equals ti.IdInstancia
 
                 join teo in _context.TbEventoOrigens
-                on ti.IdInstancia equals teo.IdInstancia
+                on ti.IdInstancia equals teo.IdInstancia into teoGroup
+                from teo in teoGroup.DefaultIfEmpty()
 
                 join te in _context.TbEventos
-                on teo.IdEvento equals te.IdEvento
+                on teo.IdEvento equals te.IdEvento into teGroup
+                from te in teGroup.DefaultIfEmpty()
 
                 join tc in _context.TbCertificados
                 on te.IdEvento equals tc.IdEvento into tcGroup
@@ -141,12 +143,7 @@ namespace backend_trazabilidad.Services.Postgresql
                 // ================================================================================
                 // 1. BUSCAR PLANTA
                 // ================================================================================
-                System.Diagnostics.Debug.WriteLine("======================================");
-                System.Diagnostics.Debug.WriteLine($"PLANTA RECIBIDA: {dto.PlantaId}");
-                System.Diagnostics.Debug.WriteLine($"CERTIFICADO: {dto.NroCertificado}");
-                System.Diagnostics.Debug.WriteLine($"VOLUMEN: {dto.VolTotal}");
-                System.Diagnostics.Debug.WriteLine($"FECHA: {dto.FechaMuestra}");
-                System.Diagnostics.Debug.WriteLine("======================================");
+
                 var loteQwery = await _context.TbLoteGlps.FirstOrDefaultAsync(x => x.IdPlantaOrigen == dto.PlantaId);
                 var plantaQwery = await _context.TbPlanta.FirstOrDefaultAsync(x => x.IdPlanta == dto.PlantaId);
                 if (plantaQwery == null)

@@ -64,7 +64,10 @@ namespace backend_trazabilidad.Services.Postgresql
                 {
                     WriteIndented = true
                 }));
-
+            long idEvento = evr.IdEvento.Value;
+            long idInstancia = evr.IdInstancia.Value;
+            long idPlanta = evr.IdPlanta.Value;
+            long idData = evr.Data.Value;
 
             var usuarioAutenticado = ObtenerIdUsuario();
 
@@ -76,7 +79,7 @@ namespace backend_trazabilidad.Services.Postgresql
                 //var planta = await _context.TbPlanta.FirstOrDefaultAsync(x => x.IdInstancia == evr.IdInstancia);//obtenemos id_planta
                 //if (planta is null) throw new Exception($"No existe la Instancia con id_instancia = {evr.IdInstancia}");
 
-                var lote = await _context.TbLoteGlps.FirstOrDefaultAsync(x => x.IdPlantaOrigen == evr.IdPlanta);//obtenemos id_lote
+                var lote = await _context.TbLoteGlps.FirstOrDefaultAsync(x => x.IdPlantaOrigen == idPlanta);//obtenemos id_lote
                 if (lote is null) throw new Exception($"No Existe el lote con la instancia {evr.IdInstancia}");
 
                 //==========================================================================
@@ -89,17 +92,15 @@ namespace backend_trazabilidad.Services.Postgresql
                     switch (evr.EtapaFlujo)
                     {
                         case "CISTERNA":
-                            var data = await _context.TbCisternaDetalles.FirstOrDefaultAsync(x => x.Id == evr.Data);
+                            var data = await _context.TbCisternaDetalles.FirstOrDefaultAsync(x => x.Id == idData);
                             if (data is null) throw new Exception($"No se encontraron datos de Cisternas con el id: {data}");
                             dataRes = data.VolBbls.Value;
-                            var events = await _context.TbEventoOrigens.FirstOrDefaultAsync(x => x.IdInstancia == evr.IdInstancia && x.IdLote == lote.IdLote);
-                            if (events is null) throw new Exception($"No se registro ningun evento");
                             break;
                     }
                     var evento_origen = new TbEventoOrigen
                     {
-                        IdEvento = evr.IdEvento,
-                        IdInstancia = evr.IdInstancia,
+                        IdEvento = idEvento,
+                        IdInstancia = idInstancia,
                         IdLote = lote.IdLote,
                         Volumen = (decimal)dataRes,
                         Activo = true,
@@ -128,8 +129,8 @@ namespace backend_trazabilidad.Services.Postgresql
                     }
                     var evento_destino = new TbEventoDestino
                     {
-                        IdEvento = evr.IdEvento,
-                        IdInstancia = evr.IdInstancia,
+                        IdEvento = idEvento,
+                        IdInstancia = idInstancia,
                         IdLote = lote.IdLote,
                         Volumen = (decimal)dataRes,
                         Activo = true,

@@ -8,9 +8,11 @@ namespace backend_trazabilidad.Services.Postgresql
     public class CatalogoService : ICatalogoService
     {
         private readonly PostgresDbContext _context;
-        public CatalogoService(PostgresDbContext context)
+        private readonly AplicationDbContext _contextOracle;
+        public CatalogoService(PostgresDbContext context, AplicationDbContext contextOracle)
         {
             _context = context;
+            _contextOracle = contextOracle;
         }
 
         public async Task<List<SelectOptionDto>> ObtenerParametricasAsync()
@@ -31,5 +33,13 @@ namespace backend_trazabilidad.Services.Postgresql
                 )
                 .ToListAsync();
         }
+
+        //public async Task<List<SelectOptionDto>> ObtenerPaisAsync()
+        //{
+        //    return await
+        //        (
+        //        //from tp in _contextOracle.
+        //        );
+        //}
     }
 }
