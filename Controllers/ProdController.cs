@@ -1,5 +1,7 @@
-﻿using backend_trazabilidad.DTOs.Postgresql;
+﻿using backend_trazabilidad.DTOs.Oracle;
+using backend_trazabilidad.DTOs.Postgresql;
 using backend_trazabilidad.Models.Postgresql;
+using backend_trazabilidad.Services.Octano;
 using backend_trazabilidad.Services.Postgresql;
 using DocumentFormat.OpenXml.Office2010.ExcelAc;
 using Microsoft.AspNetCore.Authorization;
@@ -14,9 +16,11 @@ namespace backend_trazabilidad.Controllers
     public class ProdController : ControllerBase
     {
         private readonly IProduccionService _produccionService;
-        public ProdController(IProduccionService produccionService)
+        private readonly IEntidadServies _entidad;
+        public ProdController(IProduccionService produccionService, IEntidadServies entidad)
         {
             _produccionService = produccionService;
+            _entidad = entidad;
         }
 
         [HttpGet]
@@ -25,6 +29,15 @@ namespace backend_trazabilidad.Controllers
             var prod = await _produccionService.ObtenerListadoAsync();
             return Ok(prod);
         }
+
+        [Authorize]
+        [HttpGet("getPlanta")]
+        public async Task<ActionResult<List<EntidadDto>>> getPlanta(EntidadDto edt)
+        {
+            var resultado = await _entidad.ObtenerListadoEntidadAsync(edt);
+            return Ok(resultado);
+        }
+
         [Authorize]
         [HttpPost("addPlanta")]
         public async Task<IActionResult> AddPlanta([FromBody] CrearPlantaDto dto)
@@ -91,21 +104,22 @@ namespace backend_trazabilidad.Controllers
         }
         [Authorize]
         [HttpPost("addDespachar")]
-        public async Task<IActionResult> CrearCisterna([FromBody] ProdCisternaDto pcd) 
+        public async Task<IActionResult> CrearCisterna([FromBody] ProdCisternaDto pcd)
         {
             var resultado = await _produccionService.CrearCisternasAsync(pcd);
             return Ok(resultado);
         }
         [Authorize]
         [HttpPost("AddOperador")]
-        public async Task<IActionResult> AddOperador([FromBody] CrearOperadorDto coi) 
+        public async Task<IActionResult> AddOperador([FromBody] CrearOperadorDto coi)
         {
             var resultado = await _produccionService.AdicionarOperadorAsync(coi);
-            return Ok(resultado);        
+            return Ok(resultado);
         }
         [Authorize]
         [HttpGet("getOperador")]
-        public async Task<IActionResult> getOperador() {
+        public async Task<IActionResult> getOperador()
+        {
             var resultado = await _produccionService.ObtenerOperadorAsync();
             return Ok(resultado);
         }

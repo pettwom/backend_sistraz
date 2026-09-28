@@ -56,6 +56,14 @@ namespace backend_trazabilidad.Services.Hydro
                  * una firma ligeramente diferente.
                  */
                 var respuesta = await client.AutenticarAsync(request);
+
+                System.Diagnostics.Debug.WriteLine(
+                    System.Text.Json.JsonSerializer.Serialize(respuesta,
+                        new System.Text.Json.JsonSerializerOptions
+                        {
+                            IncludeFields = true,
+                            WriteIndented = true
+                        }));
                 /*
                  * ADAPTAR estos nombres
                  * solamente si Connected Services
@@ -71,19 +79,13 @@ namespace backend_trazabilidad.Services.Hydro
                 var authResult =
              new HydroAuthResult
              {
-                 IdUsuario =
-                     resultado.ID_USUARIO,
+                 IdUsuario =resultado.ID_USUARIO,
 
-                 IdEntidad =
-                     resultado.ID_ENTIDAD,
+                 IdEntidad =resultado.ID_ENTIDAD,
 
-                 NombreCompleto =
-                     resultado.NOMBRE_COMPLETO
-                     ?? string.Empty,
+                 NombreCompleto =resultado.NOMBRE_COMPLETO?? string.Empty,
 
-                 Perfil =
-                     resultado.PERFIL
-                     ?? string.Empty
+                 Perfil =resultado.PERFIL?? string.Empty
              };
 
                 await client.CloseAsync();
@@ -98,7 +100,7 @@ namespace backend_trazabilidad.Services.Hydro
         }
 
 
-        public async Task<List<string>>ObtenerPerfilesAsync(decimal idUsuario)
+        public async Task<List<string>> ObtenerPerfilesAsync(decimal idUsuario)
         {
             try
             {

@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using backend_trazabilidad.Models.Oracle;
+using Microsoft.EntityFrameworkCore;
 using OracleScanffold.Models.Oracle;
 
 namespace backend_trazabilidad
@@ -25,6 +26,8 @@ namespace backend_trazabilidad
 
         public DbSet<TsegMenue> Menues { get; set; }
         public DbSet<TparPais> Paises { get; set; }
+
+        public virtual DbSet<VusrInfHydroGeneralSp> VusrInfHydroGeneralSps { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -227,6 +230,60 @@ namespace backend_trazabilidad
 
                 entity.Property(e => e.AudEstado)
                     .HasColumnName("AUD_ESTADO");
+            });
+
+            // -------------------------------------------------------------
+            // ANH_HYD.VUSR_INF_HYDRO_GENERAL_SP
+            // -------------------------------------------------------------
+
+            modelBuilder.Entity<VusrInfHydroGeneralSp>(entity =>
+            {
+                entity.HasNoKey();
+                entity.ToView("VUSR_INF_HYDRO_GENERAL_SP", "ANH_HYD");
+
+                entity.Property(e => e.IdEntidadPadre).HasColumnName("ID_ENTIDAD_PADRE").HasColumnType("NUMBER(15,0)");
+                entity.Property(e => e.IdUsuarioAsignado).HasColumnName("ID_USUARIO_ASIGNADO").HasColumnType("NUMBER");
+                entity.Property(e => e.DenominacionPadre).HasColumnName("DENOMINACION_PADRE").IsRequired().HasMaxLength(250);
+                entity.Property(e => e.IdEntidad).HasColumnName("ID_ENTIDAD").HasColumnType("NUMBER(15,0)");
+                entity.Property(e => e.IdConsumidor).HasColumnName("ID_CONSUMIDOR").HasColumnType("NUMBER(15,0)");
+                entity.Property(e => e.Denominacion).HasColumnName("DENOMINACION").IsRequired().HasMaxLength(250);
+                entity.Property(e => e.Objeto).HasColumnName("OBJETO").HasMaxLength(4000);
+                entity.Property(e => e.Telefonos).HasColumnName("TELEFONOS").HasColumnType("NUMBER(12,0)");
+                entity.Property(e => e.AmbitoOperacionPadre).HasColumnName("AMBITO_OPERACION_PADRE").HasMaxLength(200);
+                entity.Property(e => e.AmbitoOperacion).HasColumnName("AMBITO_OPERACION").HasMaxLength(200);
+                entity.Property(e => e.IdTipoSociedad).HasColumnName("ID_TIPO_SOCIEDAD").HasColumnType("NUMBER(15,0)");
+                entity.Property(e => e.TipoSociedad).HasColumnName("TIPO_SOCIEDAD").HasMaxLength(200);
+                entity.Property(e => e.IdTipoSociedadPadre).HasColumnName("ID_TIPO_SOCIEDAD_PADRE").HasColumnType("NUMBER(15,0)");
+                entity.Property(e => e.TipoSociedadPadre).HasColumnName("TIPO_SOCIEDAD_PADRE").HasMaxLength(200);
+                entity.Property(e => e.NombresPropietario).HasColumnName("NOMBRES_PROPIETARIO").HasMaxLength(122);
+                entity.Property(e => e.CiPropietario).HasColumnName("CI_PROPIETARIO").HasMaxLength(20);
+                entity.Property(e => e.NombresRepresentante).HasColumnName("NOMBRES_REPRESENTANTE").HasMaxLength(122);
+                entity.Property(e => e.CiRepresentante).HasColumnName("CI_REPRESENTANTE").HasMaxLength(20);
+                entity.Property(e => e.Nit).HasColumnName("NIT").HasMaxLength(250);
+                entity.Property(e => e.IdTipoDocumento).HasColumnName("ID_TIPO_DOCUMENTO").HasColumnType("NUMBER");
+                entity.Property(e => e.RepresentanteLegal).HasColumnName("REPRESENTANTE_LEGAL").HasColumnType("CLOB");
+                entity.Property(e => e.Direccion).HasColumnName("DIRECCION").HasMaxLength(800);
+                entity.Property(e => e.IdDepartamento).HasColumnName("ID_DEPARTAMENTO").HasColumnType("NUMBER(15,0)");
+                entity.Property(e => e.Departamento).HasColumnName("DEPARTAMENTO").HasMaxLength(200);
+                entity.Property(e => e.IdMunicipio).HasColumnName("ID_MUNICIPIO").HasColumnType("NUMBER(15,0)");
+                entity.Property(e => e.IdLocalidad).HasColumnName("ID_LOCALIDAD").HasColumnType("NUMBER(15,0)");
+                entity.Property(e => e.Municipio).HasColumnName("MUNICIPIO").HasMaxLength(200);
+                entity.Property(e => e.Localidad).HasColumnName("LOCALIDAD").HasMaxLength(100);
+                entity.Property(e => e.IdMunicipioPadre).HasColumnName("ID_MUNICIPIO_PADRE").HasColumnType("NUMBER(15,0)");
+                entity.Property(e => e.IdLocalidadPadre).HasColumnName("ID_LOCALIDAD_PADRE").HasColumnType("NUMBER(15,0)");
+                entity.Property(e => e.MunicipioPadre).HasColumnName("MUNICIPIO_PADRE").HasMaxLength(200);
+                entity.Property(e => e.LocalidadPadre).HasColumnName("LOCALIDAD_PADRE").HasMaxLength(100);
+                entity.Property(e => e.Latitud).HasColumnName("LATITUD").HasColumnType("NUMBER(15,13)");
+                entity.Property(e => e.Longitud).HasColumnName("LONGITUD").HasColumnType("NUMBER(15,13)");
+                entity.Property(e => e.IdActividad).HasColumnName("ID_ACTIVIDAD").HasColumnType("NUMBER(15,0)");
+                entity.Property(e => e.Actividad).HasColumnName("ACTIVIDAD").IsRequired().HasMaxLength(250);
+                entity.Property(e => e.Licencia).HasColumnName("LICENCIA").HasMaxLength(50);
+                entity.Property(e => e.LicVigencia).HasColumnName("LIC_VIGENCIA").HasMaxLength(10);
+                entity.Property(e => e.LicVencimiento).HasColumnName("LIC_VENCIMIENTO").HasMaxLength(10);
+                entity.Property(e => e.LicProd).HasColumnName("LIC_PROD").HasColumnType("CLOB");
+                entity.Property(e => e.LicIdProd).HasColumnName("LIC_ID_PROD").HasColumnType("CLOB");
+                entity.Property(e => e.InfProvSw).HasColumnName("INF_PROV_SW").HasMaxLength(250);
+                entity.Property(e => e.NroHydro).HasColumnName("NRO_HYDRO").HasMaxLength(250);
             });
         }
     }

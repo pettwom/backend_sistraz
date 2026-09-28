@@ -82,6 +82,7 @@ builder.Services.AddScoped<ITrazabilidadViewService, TrazabilidadViewService>();
 builder.Services.AddScoped<CalidadOctanoService>();
 builder.Services.AddScoped<IExcelService, ExcelService>();
 builder.Services.AddScoped<IEventoService,EventoService>();
+builder.Services.AddScoped<IEntidadServies, EntidadServices>();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services
