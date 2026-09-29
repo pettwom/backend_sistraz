@@ -1,8 +1,12 @@
 ﻿using backend_trazabilidad.DTOs.Octano;
+using backend_trazabilidad.DTOs.Octano;
 using backend_trazabilidad.DTOs.Oracle;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Oracle.ManagedDataAccess.Client;
 using System.Data;
 using System.Globalization;
+using System.Net.Http.Json;
+using static System.Net.WebRequestMethods;
 
 
 namespace backend_trazabilidad.Services.Octano
@@ -11,25 +15,68 @@ namespace backend_trazabilidad.Services.Octano
     {
         private readonly IConfiguration _configuration;
         private readonly ILogger<CalidadOctanoService> _logger;
+        private readonly HttpClient _http;
 
-        public CalidadOctanoService(
-            IConfiguration configuration,
-            ILogger<CalidadOctanoService> logger)
+        public CalidadOctanoService(IConfiguration configuration,ILogger<CalidadOctanoService> logger,HttpClient http)
         {
             _configuration = configuration;
             _logger = logger;
+            _http = http;
         }
 
-        /// <summary>
-        /// Obtiene las pruebas/parámetros de calidad configurados
-        /// en el sistema OCTANO.
-        /// </summary>
-        public async Task<List<ParametroCalidadDto>> ObtenerParametrosAsync(
-            string credencial,
-            decimal idTablaEspecificacion,
-            decimal idEntidad,
-            DateTime fecha,
-            string cite = "0")
+        public async Task<List<CertificadoAlertaOctanoDto>>
+    ListarCertificadosPrincipalAsync(
+        string credencial,
+        DateTime desde,
+        DateTime hasta,
+        decimal idEntidad,
+        decimal idUsuario,
+        bool esSuperAdministrador,
+        CancellationToken cancellationToken = default)
+        {
+            decimal entidadFiltro;
+            decimal usuarioFiltro;
+
+            if (idEntidad > 0)
+            {
+                entidadFiltro = -1;
+                usuarioFiltro = idUsuario;
+            }
+            else if (esSuperAdministrador)
+            {
+                entidadFiltro = 0;
+                usuarioFiltro = 0;
+            }
+            else
+            {
+                entidadFiltro = 0;
+                usuarioFiltro = idUsuario;
+            }
+
+            string fechaInicial = desde.ToString(
+                "dd-MM-yyyy", CultureInfo.InvariantCulture);
+
+            string fechaFinal = hasta.ToString(
+                "dd-MM-yyyy", CultureInfo.InvariantCulture);
+
+            string ruta =
+                $"ReportarCalidadPrincipal/{Uri.EscapeDataString(credencial)}" +
+                $"/{entidadFiltro}/{usuarioFiltro}" +
+                $"/{fechaInicial}/{fechaFinal}/1?format=json";
+            _logger.LogInformation(
+    "Consulta Octano: entidad={Entidad}, usuario={Usuario}, " +
+    "desde={Desde}, hasta={Hasta}, estado=1, superAdmin={SuperAdmin}",
+    entidadFiltro, usuarioFiltro, fechaInicial, fechaFinal,
+    esSuperAdministrador);
+
+            _logger.LogInformation(
+        "Claims: usuario={Usuario}, entidad={Entidad}",
+        idUsuario, idEntidad);
+            return await _http.GetFromJsonAsync<List<CertificadoAlertaOctanoDto>>(
+                ruta, cancellationToken) ?? [];
+        }
+
+        public async Task<List<ParametroCalidadDto>> ObtenerParametrosAsync(string credencial,decimal idTablaEspecificacion,decimal idEntidad,DateTime fecha,string cite = "0")
         {
             var resultado = new List<ParametroCalidadDto>();
 
@@ -39,8 +86,7 @@ namespace backend_trazabilidad.Services.Octano
 
             try
             {
-                await using var connection =
-                    new OracleConnection(connectionString);
+                await using var connection = new OracleConnection(connectionString);
 
                 await connection.OpenAsync();
 
@@ -50,14 +96,11 @@ namespace backend_trazabilidad.Services.Octano
                     idEntidad
                 );
 
-                await using var command =
-                    connection.CreateCommand();
+                await using var command =connection.CreateCommand();
 
-                command.CommandText =
-                    "APP_CANTCAL.PUSR_LISTADOS.P_LISTADO_PRUEBAS_ESPEC";
+                command.CommandText ="APP_CANTCAL.PUSR_LISTADOS.P_LISTADO_PRUEBAS_ESPEC";
 
-                command.CommandType =
-                    CommandType.StoredProcedure;
+                command.CommandType =CommandType.StoredProcedure;
 
                 /*
                  * IMPORTANTE:
@@ -290,10 +333,7 @@ namespace backend_trazabilidad.Services.Octano
             }
         }
 
-        public async Task<List<ReporteCalidadDto>>
-    ObtenerReporteCalidadAsync(
-        string credencial,
-        string cite)
+        public async Task<List<ReporteCalidadDto>>ObtenerReporteCalidadAsync(string credencial, string cite)
         {
             var resultado =
                 new List<ReporteCalidadDto>();
@@ -541,14 +581,36 @@ namespace backend_trazabilidad.Services.Octano
             return resultado;
         }
 
+        public async Task<List<CertificadoAlertaOctanoDto>> ListarCertificadosAlertaAsync(string credencial, DateTime desde, DateTime hasta, decimal idEntidad, decimal idUsuario, bool esSuperAdministrador, CancellationToken cancellationToken = default)
+        {
+            // Reproduce los casos del código antiguo:
+            // sin entidad y superadministrador: 0/0
+            // sin entidad y usuario común: 0/idUsuario
+            // con entidad: idEntidad/idUsuario
+            decimal entidadOctano = idEntidad;
+            decimal usuarioOctano =
+                idEntidad == 0 && esSuperAdministrador ? 0 : idUsuario;
+
+            var fechaInicial = desde.Date.ToString(
+                "yyyyMMddHHmmss", CultureInfo.InvariantCulture);
+
+            var fechaFinal = hasta.Date.AddDays(1).AddSeconds(-1).ToString(
+                "yyyyMMddHHmmss", CultureInfo.InvariantCulture);
+
+            var ruta =
+                $"ReportarAlertaCertificado/{Uri.EscapeDataString(credencial)}" +
+                $"/{entidadOctano}/{usuarioOctano}" +
+                $"/{fechaInicial}/{fechaFinal}?format=json";
+
+            return await _http.GetFromJsonAsync<List<CertificadoAlertaOctanoDto>>(
+                ruta, cancellationToken) ?? [];
+        }
 
         // ==================================================
         // MÉTODOS AUXILIARES
         // ==================================================
 
-        private static string? GetString(
-            OracleDataReader reader,
-            string columnName)
+        private static string? GetString(OracleDataReader reader,string columnName)
         {
             int ordinal;
 
@@ -571,9 +633,7 @@ namespace backend_trazabilidad.Services.Octano
         }
 
 
-        private static decimal? GetDecimal(
-            OracleDataReader reader,
-            string columnName)
+        private static decimal? GetDecimal(OracleDataReader reader,string columnName)
         {
             int ordinal;
 
@@ -595,26 +655,24 @@ namespace backend_trazabilidad.Services.Octano
             );
         }
 
-        private static DateTime? GetDateTime(
-            OracleDataReader reader,
-            string columnName)
-                {
-                    try
-                    {
-                        int ordinal =
-                            reader.GetOrdinal(columnName);
+        private static DateTime? GetDateTime(OracleDataReader reader,string columnName)
+        {
+            try
+            {
+                int ordinal =
+                    reader.GetOrdinal(columnName);
 
-                        if (reader.IsDBNull(ordinal))
-                            return null;
+                if (reader.IsDBNull(ordinal))
+                    return null;
 
-                        return Convert.ToDateTime(
-                            reader.GetValue(ordinal)
-                        );
-                    }
-                    catch
-                    {
-                        return null;
-                    }
-                }
+                return Convert.ToDateTime(
+                    reader.GetValue(ordinal)
+                );
+            }
+            catch
+            {
+                return null;
+            }
+        }
     }
 }

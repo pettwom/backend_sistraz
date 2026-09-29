@@ -10,5 +10,6 @@ namespace backend_trazabilidad.DTOs.Postgresql
         public DateTime CreadoEn { get; set; }
         public long IdCreadoPor { get; set; }
         public string CreadorPor { get; set; } = string.Empty;
+        public long? VolInicial  { get; set; }
     }
 }

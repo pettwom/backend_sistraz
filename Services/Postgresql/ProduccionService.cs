@@ -56,7 +56,7 @@ namespace backend_trazabilidad.Services.Postgresql
                 select new ProduccionDto
                 {
                     Lote = tlg.Codigo,
-                    Nombre = ti.Codigo,
+                    Nombre = ti.Nombre,
                     NumCertificado = tc != null ? tc.NumeroCertificado : null,
                     FechaMuestreo = tlg.FechaOrigen,
                     VolTotal = tlg.VolumenInicial,
@@ -140,20 +140,104 @@ namespace backend_trazabilidad.Services.Postgresql
             {
                 var usuarioAutenticado = ObtenerIdUsuario();
                 await using var transaccion = await _context.Database.BeginTransactionAsync();
-
                 // ================================================================================
                 // 1. BUSCAR PLANTA
                 // ================================================================================
-
                 var loteQwery = await _context.TbLoteGlps.FirstOrDefaultAsync(x => x.IdPlantaOrigen == dto.PlantaId);
-                var plantaQwery = await _context.TbPlanta.FirstOrDefaultAsync(x => x.IdPlanta == dto.PlantaId);
+                //var plantaQwery = await _context.TbPlanta.FirstOrDefaultAsync(x => x.IdPlanta == dto.PlantaId);
+                //if (plantaQwery == null)
+                //{
+                //    throw new Exception(
+                //        $"No existe la planta con id_planta = {dto.PlantaId}"
+                //    );
+                //}
+                TbInstancium? instancia = null;
 
-                if (plantaQwery == null)
+                TbPlantum?  plant= null;
+                System.Diagnostics.Debug.WriteLine($"1. Tipo = {dto.Tipo}");
+                switch (dto.Tipo) 
                 {
-                    throw new Exception(
-                        $"No existe la planta con id_planta = {dto.PlantaId}"
-                    );
+                    case 1://local
+                        // ================================================================================
+                        // CREAR NUEVA INSTANCIA
+                        // ================================================================================
+
+                        instancia = new TbInstancium
+                        {
+                            Codigo = dto.PlantaId.ToString(),
+                            Nombre = dto.Descripcion,
+                            IdTipoLugar = 1,
+                            Ubicacion = "BOLIVIA",
+                            Estado = true,
+                            Activo = true,
+                            CreadoEn = SinZonaHoraria(DateTime.Now),
+                            IdCreadoPor = usuarioAutenticado.IdUsuario,
+                            CreadoPor = usuarioAutenticado.Email.Split("@")[0].ToUpper()
+                        };
+                        _context.TbInstancia.Add(instancia);
+                        await _context.SaveChangesAsync();
+                        // ================================================================================
+                        // CREAR NUEVA PLANTA
+                        // ================================================================================
+                        plant = new TbPlantum
+                        {
+                            IdInstancia = instancia.IdInstancia,
+                            TipoOperacion = dto.Tipo,
+                            Pais = "BOLIVIA",
+                            Departamento = dto.Departamento,
+                            PuntoIngreso = dto.PuntoIngreso,
+                            Estado = true,
+                            Observacion = dto.Observacion,
+                            Activo = true,
+                            CreadoEn = SinZonaHoraria(DateTime.Now),
+                            IdCreadoPor = usuarioAutenticado.IdUsuario,
+                            CreadoPor = usuarioAutenticado.Email.Split("@")[0].ToUpper()
+                        };
+                        _context.TbPlanta.Add(plant);
+                        await _context.SaveChangesAsync();
+
+                        break;
+                    case 2://importacion
+                           // ================================================================================
+                           // CREAR NUEVA INSTANCIA
+                           // ================================================================================
+                        instancia = new TbInstancium
+                        {
+                            Codigo = dto.PlantaId.ToString(),
+                            Nombre = dto.Descripcion,
+                            IdTipoLugar = 1,
+                            Ubicacion = dto.PaisImpor,
+                            Estado = true,
+                            Activo = true,
+                            CreadoEn = SinZonaHoraria(DateTime.Now),
+                            IdCreadoPor = usuarioAutenticado.IdUsuario,
+                            CreadoPor = usuarioAutenticado.Email.Split("@")[0].ToUpper()
+                        };
+                        _context.TbInstancia.Add(instancia);
+                        await _context.SaveChangesAsync();
+                        // ================================================================================
+                        // CREAR NUEVA PLANTA
+                        // ================================================================================
+                        plant = new TbPlantum
+                        {
+                            IdInstancia = instancia.IdInstancia,
+                            TipoOperacion = dto.Tipo,
+                            Pais = dto.PaisImpor,
+                            Departamento = dto.Departamento,
+                            PuntoIngreso = dto.PuntoIngreso,
+                            Estado = true,
+                            Observacion = dto.Observacion,
+                            Activo = true,
+                            CreadoEn = SinZonaHoraria(DateTime.Now),
+                            IdCreadoPor = usuarioAutenticado.IdUsuario,
+                            CreadoPor = usuarioAutenticado.Email.Split("@")[0].ToUpper()
+                        };
+                        _context.TbPlanta.Add(plant);
+                        await _context.SaveChangesAsync();
+                        break;
                 }
+                
+
                 if (loteQwery == null)
                 {
                     // ================================================================================
@@ -162,14 +246,14 @@ namespace backend_trazabilidad.Services.Postgresql
                     var loteSave = new TbLoteGlp
                     {
                         Codigo = GenerarCodigoTrazabilidad(),
-                        IdPlantaOrigen = plantaQwery.IdPlanta,
+                        IdPlantaOrigen = plant.IdPlanta,
                         FechaOrigen = SinZonaHoraria(dto.FechaMuestra),
                         VolumenInicial = dto.VolTotal,
                         Estado = "ACTIVO",
                         Activo = true,
                         CreadoEn = SinZonaHoraria(DateTime.Now),
                         IdCreadoPor = usuarioAutenticado.IdUsuario,
-                        CreadoPor = usuarioAutenticado.Email
+                        CreadoPor = usuarioAutenticado.Email.Split("@")[0].ToUpper()
                     };
                     _context.TbLoteGlps.Add(loteSave);
                     await _context.SaveChangesAsync();
@@ -185,7 +269,7 @@ namespace backend_trazabilidad.Services.Postgresql
                         Activo = true,
                         CreadoEn = SinZonaHoraria(DateTime.Now),
                         IdCreadoPor = usuarioAutenticado.IdUsuario,
-                        CreadoPor = usuarioAutenticado.Email
+                        CreadoPor = usuarioAutenticado.Email.Split("@")[0].ToUpper()
                     };
                     _context.TbEventos.Add(eventoInit);
                     await _context.SaveChangesAsync();
@@ -195,14 +279,14 @@ namespace backend_trazabilidad.Services.Postgresql
                     var eventoOrigen = new TbEventoOrigen
                     {
                         IdEvento = eventoInit.IdEvento,
-                        IdInstancia = plantaQwery.IdInstancia,
+                        IdInstancia = plant.IdInstancia,
                         IdLote = loteSave.IdLote,
                         Volumen = dto.VolTotal,
                         Observacion = dto.Observacion,
                         Activo = true,
                         CreadoEn = SinZonaHoraria(DateTime.Now),
                         IdCreadoPor = usuarioAutenticado.IdUsuario,
-                        CreadoPor = usuarioAutenticado.Email
+                        CreadoPor = usuarioAutenticado.Email.Split("@")[0].ToUpper()
                     };
                     _context.TbEventoOrigens.Add(eventoOrigen);
                     await _context.SaveChangesAsync();
@@ -323,7 +407,8 @@ namespace backend_trazabilidad.Services.Postgresql
             return new CrearCisternasDto
             {
                 IdInstancia = planta.IdInstancia,
-                IdCisternaDetalle = planta.IdPlanta
+                IdCisternaDetalle = planta.IdPlanta,
+                VolInicial = (long)(await _context.TbLoteGlps.FirstOrDefaultAsync(x=> x.IdPlantaOrigen == pcd.IdPlanta))?.VolumenInicial
             };
         }
 

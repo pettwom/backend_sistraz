@@ -76,14 +76,22 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IHydroSoapService, HydroSoapService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IMenuService, MenuService>();
-builder.Services.AddScoped<IProduccionService,ProduccionService>();
-builder.Services.AddScoped<ICatalogoService,CatalogoService>();
+builder.Services.AddScoped<IProduccionService, ProduccionService>();
+builder.Services.AddScoped<ICatalogoService, CatalogoService>();
 builder.Services.AddScoped<ITrazabilidadViewService, TrazabilidadViewService>();
-builder.Services.AddScoped<CalidadOctanoService>();
+//builder.Services.AddScoped<CalidadOctanoService>();
 builder.Services.AddScoped<IExcelService, ExcelService>();
-builder.Services.AddScoped<IEventoService,EventoService>();
+builder.Services.AddScoped<IEventoService, EventoService>();
 builder.Services.AddScoped<IEntidadServies, EntidadServices>();
 builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddHttpClient<CalidadOctanoService>(client =>
+{
+    var url = builder.Configuration["Octano:Url"]
+        ?? throw new InvalidOperationException("Falta Octano:Url");
+
+    client.BaseAddress = new Uri(url.TrimEnd('/') + "/");
+});
 
 builder.Services
     .AddHttpClient<IHydroRestService, HydroRestService>()
@@ -96,7 +104,13 @@ builder.Services
                     .DangerousAcceptAnyServerCertificateValidator
         };
     });
+builder.Services.AddHttpClient<CertificadoOctanoService>(client =>
+{
+    var url = builder.Configuration["Octano:Url"]
+        ?? throw new InvalidOperationException("Falta Octano:Url");
 
+    client.BaseAddress = new Uri(url.TrimEnd('/') + "/");
+});
 
 
 // ========================================

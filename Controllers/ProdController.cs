@@ -32,9 +32,17 @@ namespace backend_trazabilidad.Controllers
 
         [Authorize]
         [HttpGet("getPlanta")]
-        public async Task<ActionResult<List<EntidadDto>>> getPlanta(EntidadDto edt)
+        public async Task<ActionResult<List<EntidadDto>>> getPlanta()
         {
-            var resultado = await _entidad.ObtenerListadoEntidadAsync(edt);
+            var resultado = await _entidad.ObtenerListadoEntidadLocalAsync();
+            return Ok(resultado);
+        }
+
+        [Authorize]
+        [HttpGet("getImpo")]
+        public async Task<ActionResult<List<EntidadDto>>> getImpo()
+        {
+            var resultado = await _entidad.ObtenerListadoEntidadImportacionAsync();
             return Ok(resultado);
         }
 

@@ -13,28 +13,38 @@ namespace backend_trazabilidad.Services.Octano
         {
             _context = context;
         }
-        public async Task<List<EntidadDto>> ObtenerListadoEntidadAsync(EntidadDto edt)
+        public async Task<List<EntidadDto>> ObtenerListadoEntidadLocalAsync()
         {
-            System.Diagnostics.Debug.WriteLine("================================");
-            var actividades = new[] { 16m, 52m };
             var datos = await _context.VusrInfHydroGeneralSps
                 .AsNoTracking()
-                .Where(sp => sp.IdActividad == 16 || sp.IdActividad == 52)
+                .Where(sp => sp.IdActividad == 52)
+                .OrderBy(sp=> sp.Denominacion)
                 .ToListAsync();
 
             var lista = datos.Select(sp => new EntidadDto
             {
                 IdEntidad = decimal.ToInt64(sp.IdEntidad),
                 IdActividad = sp.IdActividad,
-                IdDepartamento = sp.IdDepartamento,
-                IdMunicipio = sp.IdMunicipio,
                 Denominacion = sp.Denominacion,
-                Actividad = sp.Actividad,
-                Telefonos = sp.Telefonos?.ToString(),
-                AmbitoOperacion = sp.AmbitoOperacion,
-                Direccion = sp.Direccion,
-                Departamento = sp.Departamento,
-                Municipio = sp.Municipio
+                Actividad = sp.Actividad
+            }).ToList();
+
+            return lista;
+        }
+        public async Task<List<EntidadDto>> ObtenerListadoEntidadImportacionAsync()
+        {
+            var datos = await _context.VusrInfHydroGeneralSps
+                .AsNoTracking()
+                .Where(sp => sp.IdActividad == 16)
+                .OrderBy(sp => sp.Denominacion)
+                .ToListAsync();
+
+            var lista = datos.Select(sp => new EntidadDto
+            {
+                IdEntidad = decimal.ToInt64(sp.IdEntidad),
+                IdActividad = sp.IdActividad,
+                Denominacion = sp.Denominacion,
+                Actividad = sp.Actividad
             }).ToList();
 
             return lista;

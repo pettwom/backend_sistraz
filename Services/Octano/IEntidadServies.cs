@@ -5,6 +5,7 @@ namespace backend_trazabilidad.Services.Octano
 {
     public interface IEntidadServies
     {
-        Task<List<EntidadDto>> ObtenerListadoEntidadAsync(EntidadDto edt);
+        Task<List<EntidadDto>> ObtenerListadoEntidadLocalAsync();
+        Task<List<EntidadDto>> ObtenerListadoEntidadImportacionAsync();
     }
 }
