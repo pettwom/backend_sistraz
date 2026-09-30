@@ -1,11 +1,13 @@
-﻿using backend_trazabilidad.DTOs.Octano;
+﻿using backend_trazabilidad.Converters;
 using backend_trazabilidad.DTOs.Octano;
 using backend_trazabilidad.DTOs.Oracle;
 using DocumentFormat.OpenXml.Spreadsheet;
 using Oracle.ManagedDataAccess.Client;
 using System.Data;
+using System.Diagnostics;
 using System.Globalization;
 using System.Net.Http.Json;
+using System.Text.Json;
 using static System.Net.WebRequestMethods;
 
 
@@ -17,7 +19,7 @@ namespace backend_trazabilidad.Services.Octano
         private readonly ILogger<CalidadOctanoService> _logger;
         private readonly HttpClient _http;
 
-        public CalidadOctanoService(IConfiguration configuration,ILogger<CalidadOctanoService> logger,HttpClient http)
+        public CalidadOctanoService(IConfiguration configuration, ILogger<CalidadOctanoService> logger, HttpClient http)
         {
             _configuration = configuration;
             _logger = logger;
@@ -34,49 +36,143 @@ namespace backend_trazabilidad.Services.Octano
         bool esSuperAdministrador,
         CancellationToken cancellationToken = default)
         {
-            decimal entidadFiltro;
-            decimal usuarioFiltro;
-
-            if (idEntidad > 0)
+            try
             {
-                entidadFiltro = -1;
-                usuarioFiltro = idUsuario;
+                decimal entidadFiltro;
+                decimal usuarioFiltro;
+
+                // ============================================
+                // 1. DETERMINAR ENTIDAD / USUARIO
+                // ============================================
+
+                if (idEntidad == 0)
+                {
+                    if (esSuperAdministrador)
+                    {
+                        entidadFiltro = 0;
+                        usuarioFiltro = 0;
+                    }
+                    else
+                    {
+                        entidadFiltro = 0;
+                        usuarioFiltro = idUsuario;
+                    }
+                }
+                else
+                {
+                    entidadFiltro = 0;
+                    usuarioFiltro = 0;
+                }
+
+                Debug.WriteLine(
+                    $"Entidad={entidadFiltro} - Usuario={usuarioFiltro}"
+                );
+
+                // ============================================
+                // 2. FORMATEAR FECHAS PARA OCTANO
+                // ============================================
+
+                string fechaInicial = desde.ToString(
+                    "dd-MM-yyyy",
+                    CultureInfo.InvariantCulture
+                );
+
+                string fechaFinal = hasta.ToString(
+                    "dd-MM-yyyy",
+                    CultureInfo.InvariantCulture
+                );
+
+                // ============================================
+                // 3. CONSTRUIR URL
+                // ============================================
+
+                string ruta =
+                    $"ReportarCalidadPrincipal/" +
+                    $"{Uri.EscapeDataString(credencial)}/" +
+                    $"{entidadFiltro}/" +
+                    $"{usuarioFiltro}/" +
+                    $"{fechaInicial}/" +
+                    $"{fechaFinal}/" +
+                    $"1?format=json";
+
+                Debug.WriteLine($"Ruta Octano: {ruta}");
+
+                // ============================================
+                // 4. OBTENER JSON SIN DESERIALIZAR
+                // ============================================
+
+                using var response =
+                    await _http.GetAsync(
+                        ruta,
+                        cancellationToken
+                    );
+
+                response.EnsureSuccessStatusCode();
+
+                var json =
+                    await response.Content.ReadAsStringAsync(
+                        cancellationToken
+                    );
+
+                Debug.WriteLine($"JSON OCTANO: {json}");
+
+                // ============================================
+                // 5. CONFIGURAR DESERIALIZACIÓN
+                // ============================================
+
+                var opciones = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                opciones.Converters.Add(
+                    new OctanoDateTimeConverter()
+                );
+
+                // ============================================
+                // 6. CONVERTIR JSON
+                // ============================================
+
+                var certificados =
+                    JsonSerializer.Deserialize<
+                        List<CertificadoAlertaOctanoDto>
+                    >(
+                        json,
+                        opciones
+                    ) ?? [];
+
+                // ============================================
+                // 7. FILTRAR ENTIDAD SI CORRESPONDE
+                // ============================================
+                System.Diagnostics.Debug.WriteLine($"el resultado es : {entidadFiltro}");
+                if (entidadFiltro > 0)
+                {
+                    certificados = certificados
+                        .Where(
+                            x => x.IdEntidad == entidadFiltro
+                        )
+                        .ToList();
+                }
+                System.Diagnostics.Debug.WriteLine($"el resultado es : {certificados}");
+                return certificados;
             }
-            else if (esSuperAdministrador)
+            catch (OperationCanceledException ex)
             {
-                entidadFiltro = 0;
-                usuarioFiltro = 0;
+                throw new TimeoutException(
+                    "El servicio Octano no respondió dentro del tiempo permitido.",
+                    ex
+                );
             }
-            else
+            catch (JsonException ex)
             {
-                entidadFiltro = 0;
-                usuarioFiltro = idUsuario;
+                throw new Exception(
+                    $"Error al convertir la respuesta JSON de Octano: {ex.Message}",
+                    ex
+                );
             }
-
-            string fechaInicial = desde.ToString(
-                "dd-MM-yyyy", CultureInfo.InvariantCulture);
-
-            string fechaFinal = hasta.ToString(
-                "dd-MM-yyyy", CultureInfo.InvariantCulture);
-
-            string ruta =
-                $"ReportarCalidadPrincipal/{Uri.EscapeDataString(credencial)}" +
-                $"/{entidadFiltro}/{usuarioFiltro}" +
-                $"/{fechaInicial}/{fechaFinal}/1?format=json";
-            _logger.LogInformation(
-    "Consulta Octano: entidad={Entidad}, usuario={Usuario}, " +
-    "desde={Desde}, hasta={Hasta}, estado=1, superAdmin={SuperAdmin}",
-    entidadFiltro, usuarioFiltro, fechaInicial, fechaFinal,
-    esSuperAdministrador);
-
-            _logger.LogInformation(
-        "Claims: usuario={Usuario}, entidad={Entidad}",
-        idUsuario, idEntidad);
-            return await _http.GetFromJsonAsync<List<CertificadoAlertaOctanoDto>>(
-                ruta, cancellationToken) ?? [];
         }
 
-        public async Task<List<ParametroCalidadDto>> ObtenerParametrosAsync(string credencial,decimal idTablaEspecificacion,decimal idEntidad,DateTime fecha,string cite = "0")
+        public async Task<List<ParametroCalidadDto>> ObtenerParametrosAsync(string credencial, decimal idTablaEspecificacion, decimal idEntidad, DateTime fecha, string cite = "0")
         {
             var resultado = new List<ParametroCalidadDto>();
 
@@ -96,11 +192,11 @@ namespace backend_trazabilidad.Services.Octano
                     idEntidad
                 );
 
-                await using var command =connection.CreateCommand();
+                await using var command = connection.CreateCommand();
 
-                command.CommandText ="APP_CANTCAL.PUSR_LISTADOS.P_LISTADO_PRUEBAS_ESPEC";
+                command.CommandText = "APP_CANTCAL.PUSR_LISTADOS.P_LISTADO_PRUEBAS_ESPEC";
 
-                command.CommandType =CommandType.StoredProcedure;
+                command.CommandType = CommandType.StoredProcedure;
 
                 /*
                  * IMPORTANTE:
@@ -333,7 +429,7 @@ namespace backend_trazabilidad.Services.Octano
             }
         }
 
-        public async Task<List<ReporteCalidadDto>>ObtenerReporteCalidadAsync(string credencial, string cite)
+        public async Task<List<ReporteCalidadDto>> ObtenerReporteCalidadAsync(string credencial, string cite)
         {
             var resultado =
                 new List<ReporteCalidadDto>();
@@ -610,7 +706,7 @@ namespace backend_trazabilidad.Services.Octano
         // MÉTODOS AUXILIARES
         // ==================================================
 
-        private static string? GetString(OracleDataReader reader,string columnName)
+        private static string? GetString(OracleDataReader reader, string columnName)
         {
             int ordinal;
 
@@ -633,7 +729,7 @@ namespace backend_trazabilidad.Services.Octano
         }
 
 
-        private static decimal? GetDecimal(OracleDataReader reader,string columnName)
+        private static decimal? GetDecimal(OracleDataReader reader, string columnName)
         {
             int ordinal;
 
@@ -655,7 +751,7 @@ namespace backend_trazabilidad.Services.Octano
             );
         }
 
-        private static DateTime? GetDateTime(OracleDataReader reader,string columnName)
+        private static DateTime? GetDateTime(OracleDataReader reader, string columnName)
         {
             try
             {

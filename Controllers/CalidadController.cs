@@ -100,10 +100,7 @@ public class CalidadController : ControllerBase
 
     [Authorize]
     [HttpGet("certificados")]
-    public async Task<IActionResult> ListarCertificados(
-    [FromQuery] DateTime desde,
-    [FromQuery] DateTime hasta,
-    CancellationToken cancellationToken)
+    public async Task<IActionResult> ListarCertificados([FromQuery] DateTime desde,[FromQuery] DateTime hasta,[FromQuery] int Entidad,CancellationToken cancellationToken)
     {
 
         if (hasta.Date < desde.Date)
@@ -123,7 +120,7 @@ public class CalidadController : ControllerBase
             Credencial,
             desde,
             hasta,
-            idEntidad,
+            Entidad,
             idUsuario,
             User.IsInRole("SuperAdministrador"),
             cancellationToken);
