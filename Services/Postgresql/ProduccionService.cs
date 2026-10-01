@@ -382,7 +382,6 @@ namespace backend_trazabilidad.Services.Postgresql
                 // 2. Crear la instancia únicamente si no existe.
                 if (Instancias == null)
                 {
-
                     Instancias = new TbInstancium
                     {
                         IdTipoLugar = 2,
@@ -395,7 +394,33 @@ namespace backend_trazabilidad.Services.Postgresql
                         CreadoPor = usuarioAutenticado.Email.Split("@")[0].ToUpper()
                     };
                     _context.TbInstancia.Add(Instancias);
-                    await _context.SaveChangesAsync();
+                    //await _context.SaveChangesAsync();
+                    try
+                    {
+                        await _context.SaveChangesAsync();
+                    }
+                    catch (DbUpdateException ex)
+                        when (ex.InnerException is Npgsql.PostgresException pg)
+                    {
+                        _logger.LogError(
+                            ex,
+                            "Error al crear instancia. " +
+                            "Placa={Placa}, SqlState={SqlState}, " +
+                            "Tabla={Tabla}, Restriccion={Restriccion}, Mensaje={Mensaje}",
+                            placa,
+                            pg.SqlState,
+                            pg.TableName,
+                            pg.ConstraintName,
+                            pg.MessageText);
+
+                        System.Diagnostics.Debug.WriteLine(
+                            $"SQLSTATE: {pg.SqlState}\n" +
+                            $"TABLA: {pg.TableName}\n" +
+                            $"RESTRICCIÓN: {pg.ConstraintName}\n" +
+                            $"MENSAJE: {pg.MessageText}");
+
+                        throw;
+                    }
                 }
 
 
@@ -403,7 +428,7 @@ namespace backend_trazabilidad.Services.Postgresql
                 var existeEseDia = await _context.Set<TbCisterna>()
                     .AnyAsync(x =>
                         x.IdInstancia == Instancias.IdInstancia &&
-                        x.CreadoEn.Date == fechaOperacion );
+                        x.CreadoEn.Date == fechaOperacion);
 
                 if (existeEseDia)
                 {
