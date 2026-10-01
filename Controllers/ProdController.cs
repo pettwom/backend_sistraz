@@ -114,8 +114,15 @@ namespace backend_trazabilidad.Controllers
         [HttpPost("addDespachar")]
         public async Task<IActionResult> CrearCisterna([FromBody] ProdCisternaDto pcd)
         {
-            var resultado = await _produccionService.CrearCisternasAsync(pcd);
-            return Ok(resultado);
+            try
+            {
+                var resultado = await _produccionService.CrearCisternasAsync(pcd);
+                return Ok(resultado);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { mensaje = ex.Message });
+            }
         }
         [Authorize]
         [HttpPost("AddOperador")]

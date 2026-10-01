@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace backend_trazabilidad.Models.Postgresql;
+namespace backend_trazabilidad.Models.PostgresqlPrueba;
 
 public partial class TbCertificado
 {
@@ -10,7 +10,7 @@ public partial class TbCertificado
     public long IdEvento { get; set; }
 
     public int? IdCertParam { get; set; }
-    public long IdInstancia { get; set; }
+
     public string NumeroCertificado { get; set; } = null!;
 
     public string TipoCertificado { get; set; } = null!;
@@ -53,5 +53,5 @@ public partial class TbCertificado
 
     public string? EliminadoPor { get; set; }
 
-    public virtual TbParamCert? IdCertParamNavigation { get; set; }
+    public int? IdInstancia { get; set; }
 }

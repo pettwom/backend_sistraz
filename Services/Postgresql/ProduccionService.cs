@@ -49,7 +49,7 @@ namespace backend_trazabilidad.Services.Postgresql
                 on te.IdEvento equals tc.IdEvento into tcGroup
                 from tc in tcGroup.DefaultIfEmpty()
 
-                //where tp.TipoOperacion == 1
+                    //where tp.TipoOperacion == 1
 
                 orderby tlg.Codigo ascending
 
@@ -144,20 +144,14 @@ namespace backend_trazabilidad.Services.Postgresql
                 // 1. BUSCAR PLANTA
                 // ================================================================================
                 var loteQwery = await _context.TbLoteGlps.FirstOrDefaultAsync(x => x.IdPlantaOrigen == dto.PlantaId);
-                //var plantaQwery = await _context.TbPlanta.FirstOrDefaultAsync(x => x.IdPlanta == dto.PlantaId);
-                //if (plantaQwery == null)
-                //{
-                //    throw new Exception(
-                //        $"No existe la planta con id_planta = {dto.PlantaId}"
-                //    );
-                //}
                 TbInstancium? instancia = null;
 
-                TbPlantum?  plant= null;
+                TbPlantum? plant = null;
                 System.Diagnostics.Debug.WriteLine($"1. Tipo = {dto.Tipo}");
-                switch (dto.Tipo) 
+                switch (dto.Tipo)
                 {
                     case 1://local
+
                         // ================================================================================
                         // CREAR NUEVA INSTANCIA
                         // ================================================================================
@@ -236,7 +230,7 @@ namespace backend_trazabilidad.Services.Postgresql
                         await _context.SaveChangesAsync();
                         break;
                 }
-                
+
 
                 if (loteQwery == null)
                 {
@@ -291,6 +285,18 @@ namespace backend_trazabilidad.Services.Postgresql
                     _context.TbEventoOrigens.Add(eventoOrigen);
                     await _context.SaveChangesAsync();
 
+                    var certificado = new TbCertificado
+                    {
+                        IdEvento = eventoInit.IdEvento,
+                        NumeroCertificado = dto.NroCertificado,
+                        IdInstancia = instancia.IdInstancia,
+                        Activo = true,
+                        CreadoEn = SinZonaHoraria(DateTime.Now),
+                        IdCreadoPor = usuarioAutenticado.IdUsuario,
+                        CreadoPor = usuarioAutenticado.Email.Split("@")[0].ToUpper()
+                    };
+                    _context.TbCertificados.Add(certificado);
+                    await _context.SaveChangesAsync();
 
                 }
                 // ================================================================================
@@ -351,31 +357,67 @@ namespace backend_trazabilidad.Services.Postgresql
 
                 var id_cisterna = item.Id;
 
+
+
+
+
+
+
+                // =============================================
                 // OBTENGO LOS DATOS DEL CONDUCTOR, LA PLACA, VOLUMEN TM
                 // =============================================
                 var Cist = await _context.TbCisternaDetalles.FirstOrDefaultAsync(x => x.Id == item.Id);
 
-                Instancia = new TbInstancium
-                {
-                    IdTipoLugar = 2,
-                    Codigo = Cist.Placa,
-                    Nombre = "Cisterna " + Cist.Placa,
-                    Estado = true,
-                    Activo= true,
-                    CreadoEn = DateTime.Now,
-                    IdCreadoPor = usuarioAutenticado.IdUsuario,
-                    CreadoPor = usuarioAutenticado.Email.Split("@")[0].ToUpper()
-                };
-                _context.TbInstancia.Add(Instancia);
+                if (Cist == null)
+                    throw new InvalidOperationException($"No existe la cisterna con ID {item.Id}.");
 
-                await _context.SaveChangesAsync();
+                var placa = Cist.Placa?.Trim().ToUpperInvariant();
+
+                if (string.IsNullOrWhiteSpace(placa))
+                    throw new InvalidOperationException("La cisterna no tiene placa.");
+
+                // 1. Reutilizar la instancia de la cisterna.
+                var Instancias = await _context.TbInstancia.FirstOrDefaultAsync(x => x.IdTipoLugar == 2 && x.Codigo == placa);
+
+                // 2. Crear la instancia únicamente si no existe.
+                if (Instancias == null)
+                {
+
+                    Instancias = new TbInstancium
+                    {
+                        IdTipoLugar = 2,
+                        Codigo = placa,
+                        Nombre = "Cisterna " + placa,
+                        Estado = true,
+                        Activo = true,
+                        CreadoEn = DateTime.Now,
+                        IdCreadoPor = usuarioAutenticado.IdUsuario,
+                        CreadoPor = usuarioAutenticado.Email.Split("@")[0].ToUpper()
+                    };
+                    _context.TbInstancia.Add(Instancias);
+                    await _context.SaveChangesAsync();
+                }
+
+
+                var fechaOperacion = DateTime.Today;
+                var existeEseDia = await _context.Set<TbCisterna>()
+                    .AnyAsync(x =>
+                        x.IdInstancia == Instancias.IdInstancia &&
+                        x.CreadoEn.Date == fechaOperacion );
+
+                if (existeEseDia)
+                {
+                    throw new InvalidOperationException(
+                        $"La cisterna {Cist.Placa} ya está registrada " +
+                        $"para el día {fechaOperacion:dd/MM/yyyy}.");
+                }
 
                 var SaveCist = new TbCisterna
                 {
-                    IdInstancia = Instancia.IdInstancia,
+                    IdInstancia = Instancias.IdInstancia,
                     IdCisternaDetalle = item.Id,
                     Estado = true,
-                    Activo= true,
+                    Activo = true,
                     CreadoEn = DateTime.Now,
                     IdCreadoPor = usuarioAutenticado.IdUsuario,
                     CreadoPor = usuarioAutenticado.Email.Split("@")[0].ToUpper()
@@ -386,20 +428,20 @@ namespace backend_trazabilidad.Services.Postgresql
                 var eventosDto = new EventoRequestDto
                 {
                     IdPlanta = pcd.IdPlanta,
-                    IdInstancia = Instancia.IdInstancia,
+                    IdInstancia = Instancias.IdInstancia,
                     TipoAccion = "ORIGEN",
                     TipoEvento = "DESPACHO",
                     Descripcion = "prueba de descripcion",
                     Data = Cist.Id,
                     EtapaFlujo = "CISTERNA",
-                    CantEvento=y,
-                    IdEvento= idEvento
+                    CantEvento = y,
+                    IdEvento = idEvento
                 };
                 await _IEventoService.AlmacenarEvento(eventosDto);
 
             }
             await transaccion.CommitAsync();
-            
+
 
             System.Diagnostics.Debug.WriteLine("FIN CrearCisternasAsync");
             System.Diagnostics.Debug.WriteLine("=====================================");
@@ -408,8 +450,11 @@ namespace backend_trazabilidad.Services.Postgresql
             {
                 IdInstancia = planta.IdInstancia,
                 IdCisternaDetalle = planta.IdPlanta,
-                VolInicial = (long)(await _context.TbLoteGlps.FirstOrDefaultAsync(x=> x.IdPlantaOrigen == pcd.IdPlanta))?.VolumenInicial
+                VolInicial = (long)(await _context.TbLoteGlps.FirstOrDefaultAsync(x => x.IdPlantaOrigen == pcd.IdPlanta))?.VolumenInicial
             };
+
+
+
         }
 
         public async Task<CrearOperadorDto> AdicionarOperadorAsync(CrearOperadorDto coi)
@@ -439,9 +484,9 @@ namespace backend_trazabilidad.Services.Postgresql
                     IdTipoLugar = 1,
                     Ubicacion = coi.PaisImpor,
                     Estado = true,
-                    Activo = true, 
-                    CreadoEn=DateTime.Now,
-                    IdCreadoPor= usuario.IdUsuario,
+                    Activo = true,
+                    CreadoEn = DateTime.Now,
+                    IdCreadoPor = usuario.IdUsuario,
                     CreadoPor = usuario.Email.Split("@")[0].ToUpper()
                 };
                 _context.TbInstancia.Add(instancia);
@@ -483,17 +528,18 @@ namespace backend_trazabilidad.Services.Postgresql
             }
         }
 
-        public async Task<List<CargaOperadorDto>> ObtenerOperadorAsync() {
+        public async Task<List<CargaOperadorDto>> ObtenerOperadorAsync()
+        {
             var resQuery = await (
                     from tp in _context.TbPlanta
                     join ti in _context.TbInstancia
                     on tp.IdInstancia equals ti.IdInstancia
                     where tp.TipoOperacion == 2
                     select new CargaOperadorDto
-                    {   
+                    {
                         IdOperador = tp.IdPlanta,
                         Codigo = ti.Codigo,
-                        Descripcion= ti.Descripcion,
+                        Descripcion = ti.Descripcion,
                         Pais = tp.Pais,
                         PuntoIngreso = tp.PuntoIngreso
                     }

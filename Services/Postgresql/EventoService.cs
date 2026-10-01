@@ -46,6 +46,7 @@ namespace backend_trazabilidad.Services.Postgresql
                 };
                 _context.TbEventos.Add(evento);
                 await _context.SaveChangesAsync();
+
                 return evento.IdEvento;
             }
             catch (Exception ex)

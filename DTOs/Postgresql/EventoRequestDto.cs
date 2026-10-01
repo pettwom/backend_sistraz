@@ -15,6 +15,7 @@ namespace backend_trazabilidad.DTOs.Postgresql
         public string? EtapaFlujo { get; set; } = string.Empty;
         public long? CantEvento { get; set; }
         public long? IdEvento { get; set; }
+        public string NroCertificado { get; set; } = string.Empty;
     }
     //public class DataDto
     //{

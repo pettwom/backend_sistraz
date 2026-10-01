@@ -207,6 +207,7 @@ public partial class PostgresDbContext : DbContext
             entity.Property(e => e.FechaMuestreo)
                 .HasColumnType("timestamp(0) without time zone")
                 .HasColumnName("fecha_muestreo");
+            entity.Property(e => e.IdInstancia).HasColumnName("id_instancia");
             entity.Property(e => e.IdActualizadoPor).HasColumnName("id_actualizado_por");
             entity.Property(e => e.IdCertParam).HasColumnName("id_cert_param");
             entity.Property(e => e.IdCreadoPor).HasColumnName("id_creado_por");
